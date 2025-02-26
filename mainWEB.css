@@ -1,0 +1,131 @@
+/* Reset & Styling Dasar */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #f8f8fc;
+}
+
+.container {
+    width: 450px;
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Progress Bar */
+.progress-container {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 25%;
+    background: #a084e8;
+    border-radius: 4px;
+    transition: 0.4s ease-in-out;
+}
+
+#progress-text {
+    display: block;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #555;
+}
+
+/* Form Styling */
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+}
+
+h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f9f9f9;
+    transition: 0.3s;
+}
+
+input:focus {
+    border-color: #a084e8;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 8px rgba(160, 132, 232, 0.3);
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+}
+
+.form-row input {
+    flex: 1;
+}
+
+/* Tombol Navigasi */
+.button-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+button {
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.next-btn {
+    background: #a084e8;
+    color: white;
+}
+
+.next-btn:hover {
+    background: #7c60c8;
+}
+
+.prev-btn {
+    background: #ddd;
+}
+
+.prev-btn:hover {
+    background: #bbb;
+}
+
+.submit-btn {
+    background: #4CAF50;
+    color: white;
+}
+
+.submit-btn:hover {
+    background: #3c9f40;
+}

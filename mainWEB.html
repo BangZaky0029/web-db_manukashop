@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Step Form</title>
+    <link rel="stylesheet" href="mainWEB.css">
+</head>
+<body>
+
+    <div class="container">
+        <h2>Welcome to StarLand</h2>
+        <p>Complete the 7 steps to get started</p>
+        
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+            <span id="progress-text">Step 1 of 4</span>
+        </div>
+
+        <!-- Form Steps -->
+        <form id="multiStepForm">
+            <div class="form-step active">
+                <h3>Roles and Employees</h3>
+                <input type="text" placeholder="Organization Name" required>
+                <input type="text" placeholder="Organization Type" required>
+                <div class="form-row">
+                    <input type="text" placeholder="Phone No" required>
+                    <input type="email" placeholder="Email Id" required>
+                </div>
+                <input type="text" placeholder="Location" required>
+                <div class="button-container">
+                    <button type="button" class="next-btn">Next</button>
+                </div>
+            </div>
+
+            <div class="form-step">
+                <h3>Products and Services</h3>
+                <input type="text" placeholder="Product Name" required>
+                <input type="text" placeholder="Service Type" required>
+                <div class="button-container">
+                    <button type="button" class="prev-btn">Previous</button>
+                    <button type="button" class="next-btn">Next</button>
+                </div>
+            </div>
+
+            <div class="form-step">
+                <h3>Scheduler Settings</h3>
+                <input type="date" placeholder="Schedule Date" required>
+                <input type="time" placeholder="Schedule Time" required>
+                <div class="button-container">
+                    <button type="button" class="prev-btn">Previous</button>
+                    <button type="button" class="next-btn">Next</button>
+                </div>
+            </div>
+
+            <div class="form-step">
+                <h3>Payment Settings</h3>
+                <input type="text" placeholder="Payment Method" required>
+                <input type="number" placeholder="Card Number" required>
+                <div class="button-container">
+                    <button type="button" class="prev-btn">Previous</button>
+                    <button type="submit" class="submit-btn">Submit</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="mainWEB.js"></script>
+</body>
+</html>
