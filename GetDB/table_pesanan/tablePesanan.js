@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function initApp() {
         try {
+            await syncOrdersFromInputTable();
             // First load reference data
             await fetchReferenceData();
             // Then fetch orders
@@ -27,6 +28,17 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
             console.error("Error initializing app:", error);
             showResultPopup("Gagal memuat aplikasi. Silakan refresh halaman.", true);
+        }
+    }
+
+    async function syncOrdersFromInputTable() {
+        try {
+            const response = await fetch("http://127.0.0.1:5000/api/sync-orders", { method: "POST" });
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const data = await response.json();
+            console.log("Sync Result:", data);
+        } catch (error) {
+            console.error("Error syncing orders:", error);
         }
     }
 
@@ -779,7 +791,44 @@ document.addEventListener("DOMContentLoaded", function () {
         return new Promise((resolve, reject) => {
             // Check if script is already loaded
             if (document.querySelector(`script[src="${src}"]`)) {
-                resolve();
+                resolve(function addDeleteEventListeners() {
+                    const tableBody = document.querySelector('table tbody');
+                    const deletePopup = document.getElementById("deletePopup");
+                    const confirmDeleteBtn = document.getElementById("confirmDelete");
+                    const cancelDeleteBtn = document.getElementById("cancelDelete");
+                
+                    // Use event delegation for better performance
+                    tableBody.addEventListener('click', function(event) {
+                        const deleteIcon = event.target.closest('.delete-icon');
+                        if (deleteIcon) {
+                            event.preventDefault();
+                            const orderId = deleteIcon.getAttribute("data-id");
+                            if (orderId) {
+                                showDeleteConfirmation(orderId);
+                            } else {
+                                console.error("Invalid order ID for deletion");
+                            }
+                        }
+                    });
+                
+                    function showDeleteConfirmation(orderId) {
+                        selectedOrderId = orderId;
+                        deletePopup.classList.add("active");
+                    }
+                
+                    // Add event listeners for the popup buttons
+                    confirmDeleteBtn.addEventListener("click", handleConfirmDelete);
+                    cancelDeleteBtn.addEventListener("click", handleCancelDelete);
+                
+                    // Keyboard accessibility
+                    deletePopup.addEventListener('keydown', function(event) {
+                        if (event.key === 'Escape') {
+                            handleCancelDelete();
+                        } else if (event.key === 'Enter' && event.target === confirmDeleteBtn) {
+                            handleConfirmDelete();
+                        }
+                    });
+                });
                 return;
             }
             
