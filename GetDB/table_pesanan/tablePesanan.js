@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentPage = 1;
     let itemsPerPage = 10;
     let allOrders = [];
+    let filteredOrders = []; // Data hasil filter
+    
 
     // Define reference data objects
     let adminList = {};
@@ -16,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function initApp() {
         try {
-            await syncOrdersFromInputTable();
+            // setupEventListeners();
             // First load reference data
             await fetchReferenceData();
             // Then fetch orders
@@ -31,16 +33,22 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    async function syncOrdersFromInputTable() {
-        try {
-            const response = await fetch("http://127.0.0.1:5000/api/sync-orders", { method: "POST" });
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-            const data = await response.json();
-            console.log("Sync Result:", data);
-        } catch (error) {
-            console.error("Error syncing orders:", error);
+    document.getElementById("inputForm").addEventListener("submit", async function (event) {
+        event.preventDefault(); // Hindari reload form
+    
+        const formData = new FormData(this);
+        const response = await fetch("http://127.0.0.1:5000/api/input-order", {
+            method: "POST",
+            body: JSON.stringify(Object.fromEntries(formData)),
+            headers: { "Content-Type": "application/json" },
+        });
+    
+        const result = await response.json();
+        if (result.status === "success") {
+            fetchOrders();  // Panggil ulang data jika sukses
         }
-    }
+    });
+    
 
     async function fetchOrders() {
         try {
@@ -51,7 +59,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             
             const data = await response.json();
-            
+            console.log("Data orders:", data); // Cek di console
+
             if (data.status === "success") {
                 allOrders = data.data;
                 renderOrdersTable(paginateOrders(allOrders));
@@ -188,11 +197,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${order.id_pesanan || "-"}</td>
                 <td>${order.id_input || "-"}</td>
                 <td>${adminList[order.admin] || "-"}</td>
-                <td>${order.quantity || "-"}</td>
+                <td>${order.qty || "-"}</td>
                 <td>${formatTanggal(order.deadline)}</td>
                 
                 <td>
-                    <select class="desainer-dropdown" data-id="${order.id_pesanan}" data-column="desainer">
+                    <select class="desainer-dropdown" data-id="${order.id_input}" data-column="desainer">
                         <option value="">Pilih Desainer</option>
                         ${Object.entries(desainerList).map(([id, nama]) =>
                             `<option value="${id}" ${order.desainer == id ? 'selected' : ''}>${nama}</option>`
@@ -201,20 +210,29 @@ document.addEventListener("DOMContentLoaded", function () {
                 </td>
     
                 <td>
-                    <select class="print-status-dropdown" data-id="${order.id_pesanan}" data-column="print_status">
-                        <option value="Pending" ${order.print_status === 'Pending' ? 'selected' : ''}>Pending</option>
-                        <option value="Selesai" ${order.print_status === 'Selesai' ? 'selected' : ''}>Selesai</option>
-                        <option value="Dibatalkan" ${order.print_status === 'Dibatalkan' ? 'selected' : ''}>Dibatalkan</option>
+                    <select class="print-status-dropdown" data-id="${order.id_input}" data-column="print_status">
+                        <option value="-" ${order.print_status === '-' ? 'selected' : ''}>-</option>
+                        <option value="EDITING" ${order.print_status === 'EDITING' ? 'selected' : ''}>EDITING</option>
+                        <option value="PRINT VENDOR" ${order.print_status === 'PRINT VENDOR' ? 'selected' : ''}>PRINT VENDOR</option>
+                        <option value="PROSES PRINT" ${order.print_status === 'PROSES PRINT' ? 'selected' : ''}>PROSES PRINT</option>
+                        <option value="SELESAI PRINT" ${order.print_status === 'SELESAI PRINT' ? 'selected' : ''}>SELESAI PRINT</option>
+                        <option value="SEDANG DI-PRESS" ${order.print_status === 'SEDANG DI-PRESS' ? 'selected' : ''}>SEDANG DI-PRESS</option>
+                        <option value="SEDANG DI-JAHIT" ${order.print_status === 'SEDANG DI-JAHIT' ? 'selected' : ''}>SEDANG DI-JAHIT</option>
+                        <option value="TAS SUDAH DI-JAHIT" ${order.print_status === 'TAS SUDAH DI-JAHIT' ? 'selected' : ''}>TAS SUDAH DI-JAHIT</option>
+                        <option value="REJECT:PRINT ULANG" ${order.print_status === 'REJECT:PRINT ULANG' ? 'selected' : ''}>REJECT:PRINT ULANG</option>
+                        <option value="TAS BLM ADA" ${order.print_status === 'TAS BLM ADA' ? 'selected' : ''}>TAS BLM ADA</option>
+                        <option value="DONE" ${order.print_status === 'DONE' ? 'selected' : ''}>DONE</option>
                     </select>
+
                 </td>
     
                 <td>
-                    <input type="text" class="layout-link-input" data-id="${order.id_pesanan}" data-column="layout_link"
+                    <input type="text" class="layout-link-input" data-id="${order.id_input}" data-column="layout_link"
                            value="${order.layout_link || ''}" placeholder="Masukkan link" />
                 </td>
     
                 <td>
-                    <select class="penjahit-dropdown" data-id="${order.id_pesanan}" data-column="penjahit">
+                    <select class="penjahit-dropdown" data-id="${order.id_input}" data-column="penjahit">
                         <option value="">Pilih Penjahit</option>
                         ${Object.entries(penjahitList).map(([id, nama]) =>
                             `<option value="${id}" ${order.penjahit == id ? 'selected' : ''}>${nama}</option>`
@@ -223,7 +241,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 </td>
     
                 <td>
-                    <select class="qc-dropdown" data-id="${order.id_pesanan}" data-column="qc">
+                    <select class="qc-dropdown" data-id="${order.id_input}" data-column="qc">
                         <option value="">Pilih QC</option>
                         ${Object.entries(qcList).map(([id, nama]) =>
                             `<option value="${id}" ${order.qc == id ? 'selected' : ''}>${nama}</option>`
@@ -235,8 +253,8 @@ document.addEventListener("DOMContentLoaded", function () {
     
                 <td>
                     <div style="display: flex; gap: 10px; justify-content: center;">
-                        <button class="delete-icon" data-id="${order.id_pesanan}"><i class="fas fa-trash-alt"></i></button>
-                        <button class="desc-table" data-id="${order.id_pesanan}"><i class="fas fa-info-circle"></i></button>
+                        <button class="delete-icon" data-id="${order.id_input}"><i class="fas fa-trash-alt"></i></button>
+                        <button class="desc-table" data-id="${order.id_input}"><i class="fas fa-info-circle"></i></button>
                     </div>
                 </td>
             `;
@@ -247,6 +265,22 @@ document.addEventListener("DOMContentLoaded", function () {
         addUpdateEventListeners();
         addInputChangeEventListeners();
         addDescriptionEventListeners();
+        // Add this call inside your initApp() function or at the end of your DOMContentLoaded
+    // setupAutoRefresh();
+    }
+
+        // Add this to your existing code in tablePesanan.js
+    function setupAutoRefresh() {
+        // Refresh data every 30 seconds
+        const refreshInterval = 30000;
+        
+        console.log("Auto refresh enabled - refreshing every " + (refreshInterval/1000) + " seconds");
+        
+        // Set up the interval timer
+        setInterval(() => {
+            console.log("Auto refreshing data...");
+            fetchOrders();
+        }, refreshInterval);
     }
     
     function addInputChangeEventListeners() {
@@ -258,8 +292,26 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 updateOrderWithConfirmation(id_pesanan, column, value);
             });
+        document.querySelectorAll(".print-status-dropdown").forEach(select => {
+            updateSelectColor(select);
+    
+            select.addEventListener("change", function () {
+                updateSelectColor(select);
+            });
         });
+    
+        function updateSelectColor(select) {
+            let selectedValue = select.value.replace(/ /g, "-"); // Ganti spasi dengan "-"
+            select.className = `print-status-dropdown option-${selectedValue}`;
+        }
+        
+        
+        });
+
+
+
     }
+
 
     async function fetchReferenceData() {
         try {
@@ -305,7 +357,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function fetchOrderDescription(orderId) {
-        const order = allOrders.find(order => order.id_pesanan == orderId);
+        const order = allOrders.find(order => order.id_input == orderId);
         if (order) {
             showDescriptionModal(order);
         } else {
@@ -313,14 +365,14 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    async function fetchLinkFoto(id_pesanan) {
-        if (!id_pesanan || id_pesanan === "-") {
-            console.warn("ID tidak valid:", id_pesanan);
+    async function fetchLinkFoto(id_input) {
+        if (!id_input || id_input === "-") {
+            console.warn("ID tidak valid:", id_input);
             return "-";
         }
     
         try {
-            const response = await fetch(`http://127.0.0.1:5000/api/get_link_foto/${id_pesanan}`);
+            const response = await fetch(`http://127.0.0.1:5000/api/get_link_foto/${id_input}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -328,12 +380,12 @@ document.addEventListener("DOMContentLoaded", function () {
             
             const data = await response.json();
     
-            if (!data || !data.data || typeof data.data.link_foto !== "string") {
-                console.warn("Format response tidak valid atau link_foto kosong:", data);
+            if (!data || !data.data || typeof data.data.link !== "string") {
+                console.warn("Format response tidak valid atau link kosong:", data);
                 return "-";
             }
             
-            return data.data.link_foto;
+            return data.data.link;
     
         } catch (error) {
             console.error("Error fetching link foto:", error);
@@ -342,8 +394,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     async function showDescriptionModal(order) {
-        if (!order.id_pesanan) {
-            console.error("ID Pesanan tidak valid:", order);
+        if (!order.id_input) {
+            console.error("ID Input tidak valid:", order);
             return;
         }
 
@@ -351,17 +403,17 @@ document.addEventListener("DOMContentLoaded", function () {
         modalBody.innerHTML = '<tr><td colspan="2" class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
         
         try {
-            const linkFoto = await fetchLinkFoto(order.id_pesanan);
+            const linkFoto = await fetchLinkFoto(order.id_input);
             
             modalBody.innerHTML = `
                 <tr><th>ID Pesanan</th><td>${order.id_pesanan || "-"}</td></tr>
                 <tr><th>Admin</th><td>${adminList[order.admin] || "-"}</td></tr>
                 <tr><th>Timestamp</th><td>${order.timestamp || "-"}</td></tr>
                 <tr><th>Deadline</th><td>${formatTanggal(order.deadline) || "-"}</td></tr>
-                <tr><th>Quantity</th><td>${order.quantity || "-"}</td></tr>
+                <tr><th>Quantity</th><td>${order.qty || "-"}</td></tr>
                 <tr><th>Platform</th><td>${order.platform || "-"}</td></tr>
                 <tr><th>Desainer</th><td>${desainerList[order.desainer] || "-"}</td></tr>
-                <tr><th>Status Print</th><td><span class="badge ${getBadgeClass(order.print_status)}">${order.print_status || "Pending"}</span></td></tr>
+                <tr><th>Status Print</th><td><span class="badge ${getBadgeClass(order.print_status)}">${order.print_status || "-"}</span></td></tr>
                 <tr><th>Layout Link</th><td>${
                     order.layout_link 
                     ? `<a href="${order.layout_link}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-link"></i> Buka Link</a>`
@@ -389,12 +441,21 @@ document.addEventListener("DOMContentLoaded", function () {
     
     function getBadgeClass(status) {
         switch(status) {
-            case 'Selesai': return 'bg-success';
-            case 'Pending': return 'bg-warning text-dark';
-            case 'Dibatalkan': return 'bg-danger';
-            default: return 'bg-secondary';
+            case '-': return 'bg-primary text-white';
+            case 'EDITING': return 'bg-primary text-white';
+            case 'PRINT VENDOR': return 'bg-light text-dark border';
+            case 'PROSES PRINT': return 'bg-warning text-dark';
+            case 'SELESAI PRINT': return 'bg-danger text-white';
+            case 'SEDANG DI-PRESS': return 'bg-indigo text-white';
+            case 'SEDANG DI-JAHIT': return 'bg-success text-white';
+            case 'TAS SUDAH DI-JAHIT': return 'bg-teal text-white';
+            case 'REJECT:PRINT ULANG': return 'bg-danger text-white';
+            case 'TAS BLM ADA': return 'bg-danger text-white';
+            case 'DONE': return 'bg-success text-white';
+            default: return 'bg-secondary text-white';
         }
     }
+    
     
     function addDeleteEventListeners() {
         document.querySelectorAll(".delete-icon").forEach(icon => {
@@ -406,7 +467,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
         
-        // Add event listeners for the popup buttons
+        // Add event listeners for popup buttons
         document.getElementById("confirmDelete").addEventListener("click", handleConfirmDelete);
         document.getElementById("cancelDelete").addEventListener("click", handleCancelDelete);
     }
@@ -418,39 +479,43 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     
         const confirmDeleteBtn = document.getElementById("confirmDelete");
-        confirmDeleteBtn.disabled = true; // Disable tombol sementara
+        confirmDeleteBtn.disabled = true;
         confirmDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghapus...';
     
-        fetch(`http://127.0.0.1:5000/api/delete-order/${selectedOrderId}`, { method: "DELETE" })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.status === "success") {
-                    showResultPopup("Pesanan berhasil dihapus!");
-                    fetchOrders(); // Refresh data after deletion
-                } else {
-                    showResultPopup(`Gagal menghapus: ${data.message}`, true);
-                }
-            })
-            .catch(error => {
-                console.error("Error saat menghapus pesanan:", error);
-                showResultPopup(`Terjadi kesalahan saat menghapus pesanan: ${error.message}`, true);
-            })
-            .finally(() => {
-                confirmDeleteBtn.disabled = false;
-                confirmDeleteBtn.innerHTML = 'Ya, Hapus';
-                const deletePopup = document.getElementById("deletePopup");
-                deletePopup.classList.remove("active");
-            });
+        // Corrected endpoint to use id_input instead of id_pesanan
+        fetch(`http://127.0.0.1:5000/api/delete-order/${encodeURIComponent(selectedOrderId.trim())}`, { 
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === "success") {
+                showResultPopup("Pesanan berhasil dihapus!");
+                fetchOrders(); // Refresh the order list
+            } else {
+                showResultPopup(`Gagal menghapus: ${data.message || "Unknown error"}`, true);
+            }
+        })
+        .catch(error => {
+            console.error("Error saat menghapus pesanan:", error);
+            showResultPopup(`Terjadi kesalahan: ${error.message}`, true);
+        })
+        .finally(() => {
+            confirmDeleteBtn.disabled = false;
+            confirmDeleteBtn.innerHTML = 'Ya, Hapus';
+            document.getElementById("deletePopup").classList.remove("active");
+            selectedOrderId = null;
+        });
     }
     
     function handleCancelDelete() {
-        const deletePopup = document.getElementById("deletePopup");
-        deletePopup.classList.remove("active");
+        document.getElementById("deletePopup").classList.remove("active");
+        selectedOrderId = null;
     }
     
     function showResultPopup(message, isError = false) {
@@ -471,7 +536,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 3000);
     }
     
-    function updateOrderWithConfirmation(id_pesanan, column, value) {
+    function updateOrderWithConfirmation(id_input, column, value) {
         const confirmPopup = document.getElementById("confirmUpdatePopup");
         const confirmMessage = document.getElementById("confirmUpdateMessage");
         
@@ -495,11 +560,11 @@ document.addEventListener("DOMContentLoaded", function () {
             case "qc": columnDisplay = "QC"; break;
         }
         
-        confirmMessage.innerText = `Yakin ingin update ${columnDisplay} menjadi "${displayValue}" untuk ID Pesanan ${id_pesanan}?`;
+        confirmMessage.innerText = `Yakin ingin update ${columnDisplay} menjadi "${displayValue}" untuk ID Pesanan ${id_input}?`;
         confirmPopup.classList.add("active");
         
         // Store the update details for use in event handlers
-        confirmPopup.dataset.id = id_pesanan;
+        confirmPopup.dataset.id = id_input;
         confirmPopup.dataset.column = column;
         confirmPopup.dataset.value = value;
     }
@@ -508,22 +573,22 @@ document.addEventListener("DOMContentLoaded", function () {
         // For all dropdowns with data-column attribute
         document.querySelectorAll("select[data-column]").forEach(select => {
             select.addEventListener("change", function () {
-                const id_pesanan = this.dataset.id;
+                const id_input = this.dataset.id;
                 const column = this.dataset.column;
                 const value = this.value;
     
-                updateOrderWithConfirmation(id_pesanan, column, value);
+                updateOrderWithConfirmation(id_input, column, value);
             });
         });
         
         // Confirm update button
         document.getElementById("confirmUpdateBtn").addEventListener("click", function() {
             const popup = document.getElementById("confirmUpdatePopup");
-            const id_pesanan = popup.dataset.id;
+            const id_input = popup.dataset.id;
             const column = popup.dataset.column;
             const value = popup.dataset.value;
             
-            updateOrder(id_pesanan, column, value);
+            updateOrder(id_input, column, value);
             popup.classList.remove("active");
         });
         
@@ -537,7 +602,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const element = document.querySelector(selector);
             
             if (element) {
-                const originalOrder = allOrders.find(order => order.id_pesanan == popup.dataset.id);
+                const originalOrder = allOrders.find(order => order.id_input == popup.dataset.id);
                 if (originalOrder && element.tagName === "SELECT") {
                     element.value = originalOrder[popup.dataset.column] || "";
                 } else if (originalOrder && element.tagName === "INPUT") {
@@ -547,24 +612,19 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     
-    function updateOrder(id_pesanan, column, value) {
-        console.log(`Updating order ${id_pesanan}: ${column} = ${value}`);
-        
-        // Determine which endpoint to use based on column
-        let endpoint = "http://127.0.0.1:5000/api/update-order";
-        
-        if (column === "print_status" || column === "layout_link") {
-            endpoint = "http://127.0.0.1:5000/api/update-print-status-layout";
-        }
-        
+    function updateOrder(id_input, column, value) {
+        // Use the correct endpoint based on the Python API
+        const endpoint = "http://127.0.0.1:5000/api/update-print-status-layout";
+    
         const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
         confirmUpdateBtn.disabled = true;
         confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-        
+    
+        // Send the PUT request with the correct parameter names
         fetch(endpoint, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id_pesanan, column, value })
+            body: JSON.stringify({ id_input, column, value })
         })
         .then(response => {
             if (!response.ok) {
@@ -575,13 +635,12 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(data => {
             if (data.status === "success") {
                 showResultPopup(`Update berhasil: ${column} -> ${value}`);
-                // Update the local data
-                const orderIndex = allOrders.findIndex(order => order.id_pesanan == id_pesanan);
+                // In the updateOrder function, look at this part:
+                const orderIndex = allOrders.findIndex(order => order.id_input == id_input);
                 if (orderIndex !== -1) {
                     allOrders[orderIndex][column] = value;
                     renderOrdersTable(paginateOrders(allOrders));
                 } else {
-                    // If local update fails, fetch all orders again
                     fetchOrders();
                 }
             } else {
@@ -696,7 +755,7 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Add data rows in a specific order
         const orderedKeys = [
-            "id_pesanan", "timestamp", "admin", "deadline", "quantity", 
+            "id_input",  "id_pesanan", "timestamp", "admin", "deadline", "qty", 
             "platform", "desainer", "print_status", "layout_link", 
             "penjahit", "qc"
         ];

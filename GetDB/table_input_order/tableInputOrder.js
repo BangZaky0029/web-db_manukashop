@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let ordersData = [];
 
     function fetchOrders() {
-        fetch("http://127.0.0.1:5000/api/input-table")  // Sesuaikan dengan API kamu
+        fetch("http://127.0.0.1:5000/api/get-input-table")  // Sesuaikan dengan API kamu
             .then(response => response.json())
             .then(data => {
                 if (data.status === "success") {
@@ -83,4 +83,22 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     fetchOrders();
+    // Call this function at the end of your DOMContentLoaded event
+    // setupAutoRefresh();
+
 });
+
+// Auto refresh function - add this after your other code
+function setupAutoRefresh() {
+    // Refresh data every 30 seconds (30000 milliseconds)
+    // You can adjust this interval as needed
+    const refreshInterval = 30000; 
+    
+    console.log("Auto refresh enabled - refreshing every " + (refreshInterval/1000) + " seconds");
+    
+    // Set up the interval timer
+    setInterval(() => {
+        console.log("Auto refreshing data...");
+        fetchOrders();
+    }, refreshInterval);
+}
