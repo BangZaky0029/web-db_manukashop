@@ -233,22 +233,6 @@ document.addEventListener("DOMContentLoaded", function () {
         addUpdateEventListeners();
         addInputChangeEventListeners();
         addDescriptionEventListeners();
-        // Add this call inside your initApp() function or at the end of your DOMContentLoaded
-    // setupAutoRefresh();
-    }
-
-        // Add this to your existing code in tablePesanan.js
-    function setupAutoRefresh() {
-        // Refresh data every 30 seconds
-        const refreshInterval = 1000;
-        
-        console.log("Auto refresh enabled - refreshing every " + (refreshInterval/1000) + " seconds");
-        
-        // Set up the interval timer
-        setInterval(() => {
-            console.log("Auto refreshing data...");
-            fetchOrders();
-        }, refreshInterval);
     }
     
     function addInputChangeEventListeners() {
@@ -590,6 +574,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const endpoint = "http://127.0.0.1:5000/api/update-print-status-layout";
     
         const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
+        confirmUpdateBtn.disabled = false; // 🔓 Enable kembali
         confirmUpdateBtn.disabled = true;
         confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     
@@ -599,6 +584,7 @@ document.addEventListener("DOMContentLoaded", function () {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id_input, column, value })
         })
+
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -639,6 +625,7 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .finally(() => {
             confirmUpdateBtn.disabled = false;
+            confirmUpdateBtn.disabled = false; // 🔓 Enable kembali
             confirmUpdateBtn.innerHTML = 'Ya, Update';
         });
     }

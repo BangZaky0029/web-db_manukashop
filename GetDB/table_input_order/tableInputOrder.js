@@ -56,15 +56,16 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("nextPage").disabled = currentPage === totalPages;
     }
 
+    let isUpdating = false;
+
     function updateData() {
-        if (isUpdating) return;  // Hindari multiple update saat masih proses
+        if (isUpdating) return;
         isUpdating = true;
-
-        fetchOrders();
-
-        setTimeout(() => {
-            isUpdating = false;
-        }, 1000);  // Hindari terlalu sering update agar UI tetap responsif
+    
+        fetch("/api/update-print-status-layout", { method: "PUT" })
+            .then(response => response.json())
+            .then(data => console.log("Update sukses:", data))
+            .finally(() => isUpdating = false);
     }
 
     document.getElementById("prevPage").addEventListener("click", function () {
