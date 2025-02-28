@@ -3,69 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Step Form</title>
+    <title>Manuka Dashboard</title>
     <link rel="stylesheet" href="mainWEB.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add some basic styles for loading and error states -->
 </head>
 <body>
-
-    <div class="container">
-        <h2>Welcome to StarLand</h2>
-        <p>Complete the 7 steps to get started</p>
-        
-        <!-- Progress Bar -->
-        <div class="progress-container">
-            <div class="progress-bar" id="progress-bar"></div>
-            <span id="progress-text">Step 1 of 4</span>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <!-- Placeholder for logo -->
+                    <div class="logo-placeholder">
+                        <i class="fas fa-leaf"></i>
+                        <span>MANUKA</span>
+                    </div>
+                </div>
+                <button id="toggleBtn" class="toggle-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-menu">
+                <ul>
+                    <li class="menu-title">MAIN</li>
+                    <li class="menu-item active">
+                        <a href="#" class="menu-link">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link">
+                            <i class="fas fa-users"></i>
+                            <span>User</span>
+                        </a>
+                    </li>
+                    <li class="menu-title">ORDER MANAGEMENT</li>
+                    <li class="menu-item">
+                        <a href="GetDB/table_pesanan/tablePesanan.html" class="menu-link">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Table Pesanan</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="GetDB/table_input_order/tableInputOrder.html" class="menu-link">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Table Input Order</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="PostDB/inputOrder.html" class="menu-link">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Form Input Pesanan</span>
+                        </a>
+                    </li>
+                    <li class="menu-title">PRODUCTION</li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link">
+                            <i class="fas fa-industry"></i>
+                            <span>Table Design</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link">
+                            <i class="fas fa-industry"></i>
+                            <span>Table Produksi</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="footer-menu">
+                    <a href="#" class="footer-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                    <a href="#" class="footer-link">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Account</span>
+                    </a>
+                </div>
+            </div>
         </div>
-
-        <!-- Form Steps -->
-        <form id="multiStepForm">
-            <div class="form-step active">
-                <h3>Roles and Employees</h3>
-                <input type="text" placeholder="Organization Name" required>
-                <input type="text" placeholder="Organization Type" required>
-                <div class="form-row">
-                    <input type="text" placeholder="Phone No" required>
-                    <input type="email" placeholder="Email Id" required>
-                </div>
-                <input type="text" placeholder="Location" required>
-                <div class="button-container">
-                    <button type="button" class="next-btn">Next</button>
-                </div>
-            </div>
-
-            <div class="form-step">
-                <h3>Products and Services</h3>
-                <input type="text" placeholder="Product Name" required>
-                <input type="text" placeholder="Service Type" required>
-                <div class="button-container">
-                    <button type="button" class="prev-btn">Previous</button>
-                    <button type="button" class="next-btn">Next</button>
+        
+        <!-- Main Content Area -->
+        <div class="main-content" id="mainContent">
+            <div class="content-header">
+                <h1>Dashboard</h1>
+                <div class="user-menu">
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="user-info">
+                        <img src="https://via.placeholder.com/40" alt="User Avatar">
+                        <span>Admin User</span>
+                    </div>
                 </div>
             </div>
-
-            <div class="form-step">
-                <h3>Scheduler Settings</h3>
-                <input type="date" placeholder="Schedule Date" required>
-                <input type="time" placeholder="Schedule Time" required>
-                <div class="button-container">
-                    <button type="button" class="prev-btn">Previous</button>
-                    <button type="button" class="next-btn">Next</button>
+            
+            <div class="content-area">
+                <!-- Default welcome message -->
+                <div class="welcome-message" id="welcomeMessage">
+                    <h2>Welcome to Manuka Shop Dashboard</h2>
+                    <p>Select a menu item from the sidebar to get started.</p>
                 </div>
+                
+                <!-- Content from other pages will be loaded here -->
+                <div id="pageContent"></div>
             </div>
-
-            <div class="form-step">
-                <h3>Payment Settings</h3>
-                <input type="text" placeholder="Payment Method" required>
-                <input type="number" placeholder="Card Number" required>
-                <div class="button-container">
-                    <button type="button" class="prev-btn">Previous</button>
-                    <button type="submit" class="submit-btn">Submit</button>
-                </div>
-            </div>
-        </form>
+        </div>
     </div>
-
+    
     <script src="mainWEB.js"></script>
 </body>
 </html>

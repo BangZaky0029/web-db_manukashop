@@ -18,7 +18,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function initApp() {
         try {
-            // setupEventListeners();
             // First load reference data
             await fetchReferenceData();
             // Then fetch orders
@@ -27,6 +26,8 @@ document.addEventListener("DOMContentLoaded", function () {
             setupFilterAndSearch();
             // Setup PDF and Excel buttons
             setupDownloadButtons();
+            // Setup WebSocket for real-time updates
+            // setupWebSocketConnection();
         } catch (error) {
             console.error("Error initializing app:", error);
             showResultPopup("Gagal memuat aplikasi. Silakan refresh halaman.", true);
@@ -37,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
         event.preventDefault(); // Hindari reload form
     
         const formData = new FormData(this);
-        const response = await fetch("http://127.0.0.1:5000/api/input-order", {
+        const response = await fetch("http://127.0.0.1:5000/api/get_table_design", {
             method: "POST",
             body: JSON.stringify(Object.fromEntries(formData)),
             headers: { "Content-Type": "application/json" },
@@ -52,7 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function fetchOrders() {
         try {
-            const response = await fetch("http://127.0.0.1:5000/api/get-orders");
+            const response = await fetch("http://127.0.0.1:5000/api/get_table_design");
             
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -193,66 +194,41 @@ document.addEventListener("DOMContentLoaded", function () {
         orders.forEach(order => {
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>${order.timestamp || "-"}</td>
+                <td>${order.Timestamp || "-"}</td>
                 <td>${order.id_input || "-"}</td>
-                <td>${order.id_pesanan || "-"}</td>
-                <td>${order.platform || "-"}</td>
-                <td>${adminList[order.admin] || "-"}</td>
+                <td>${order.Platform || "-"}</td>
                 <td>${order.qty || "-"}</td>
-                <td>${formatTanggal(order.deadline)}</td>
-                
                 <td>
                     <select class="desainer-dropdown" data-id="${order.id_input}" data-column="desainer">
                         <option value="">Pilih Desainer</option>
                         ${Object.entries(desainerList).map(([id, nama]) =>
-                            `<option value="${id}" ${order.desainer == id ? 'selected' : ''}>${nama}</option>`
+                            `<option value="${id}" ${order.id_desain == id ? 'selected' : ''}>${nama}</option>`
                         ).join('')}
                     </select>
                 </td>
-    
-                
                 <td>
-                <input type="text" class="layout-link-input" data-id="${order.id_input}" data-column="layout_link"
-                value="${order.layout_link || ''}" placeholder="Masukkan link" />
+                    <input type="text" class="layout-link-input" data-id="${order.id_input}" data-column="layout_link"
+                           value="${order.Layout_link || ''}" placeholder="Masukkan link" />
                 </td>
-                
-                <td>
-                <select class="penjahit-dropdown" data-id="${order.id_input}" data-column="penjahit">
-                <option value="">Pilih Penjahit</option>
-                ${Object.entries(penjahitList).map(([id, nama]) =>
-                            `<option value="${id}" ${order.penjahit == id ? 'selected' : ''}>${nama}</option>`
-                        ).join('')}
-                    </select>
-                </td>
-    
-                <td>
-                <select class="qc-dropdown" data-id="${order.id_input}" data-column="qc">
-                <option value="">Pilih QC</option>
-                ${Object.entries(qcList).map(([id, nama]) =>
-                            `<option value="${id}" ${order.qc == id ? 'selected' : ''}>${nama}</option>`
-                        ).join('')}
-                    </select>
-                </td>
+                <td>${formatTanggal(order.Deadline)}</td>
                 <td>
                     <select class="print-status-dropdown" data-id="${order.id_input}" data-column="print_status">
-                        <option value="-" ${order.print_status === '-' ? 'selected' : ''}>-</option>
-                        <option value="EDITING" ${order.print_status === 'EDITING' ? 'selected' : ''}>EDITING</option>
-                        <option value="PRINT VENDOR" ${order.print_status === 'PRINT VENDOR' ? 'selected' : ''}>PRINT VENDOR</option>
-                        <option value="PROSES PRINT" ${order.print_status === 'PROSES PRINT' ? 'selected' : ''}>PROSES PRINT</option>
-                        <option value="SELESAI PRINT" ${order.print_status === 'SELESAI PRINT' ? 'selected' : ''}>SELESAI PRINT</option>
+                        <option value="-" ${order.status_print === '-' ? 'selected' : ''}>-</option>
+                        <option value="EDITING" ${order.status_print === 'EDITING' ? 'selected' : ''}>EDITING</option>
+                        <option value="PRINT VENDOR" ${order.status_print === 'PRINT VENDOR' ? 'selected' : ''}>PRINT VENDOR</option>
+                        <option value="PROSES PRINT" ${order.status_print === 'PROSES PRINT' ? 'selected' : ''}>PROSES PRINT</option>
+                        <option value="SELESAI PRINT" ${order.status_print === 'SELESAI PRINT' ? 'selected' : ''}>SELESAI PRINT</option>
                     </select>
                 </td>
-                <td>${order.Status_Produksi || "-"}</td>
                 <td>
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button class="delete-icon" data-id="${order.id_input}"><i class="fas fa-trash-alt"></i></button>
-                    <button class="desc-table" data-id="${order.id_input}"><i class="fas fa-info-circle"></i></button>
-                </div>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button class="desc-table" data-id="${order.id_input}"><i class="fas fa-info-circle"></i></button>
+                    </div>
                 </td>
-                `;
-                tableBody.appendChild(row);
-            });
-            
+            `;
+            tableBody.appendChild(row);
+        });
+    
         addDeleteEventListeners();
         addUpdateEventListeners();
         addInputChangeEventListeners();
@@ -264,7 +240,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // Add this to your existing code in tablePesanan.js
     function setupAutoRefresh() {
         // Refresh data every 30 seconds
-        const refreshInterval = 30000;
+        const refreshInterval = 1000;
         
         console.log("Auto refresh enabled - refreshing every " + (refreshInterval/1000) + " seconds");
         
@@ -276,32 +252,29 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function addInputChangeEventListeners() {
+        // Layout link input field listeners
         document.querySelectorAll(".layout-link-input").forEach(input => {
             input.addEventListener("blur", function() {
                 const id_input = this.dataset.id;
-                const column = this.dataset.column;
+                const column = "layout_link";  // Changed to match the API expectations
                 const value = this.value;
                 
                 updateOrderWithConfirmation(id_input, column, value);
             });
-        document.querySelectorAll(".print-status-dropdown").forEach(select => {
+        });
+        document.querySelectorAll(".status-produksi").forEach(select => {
             updateSelectColor(select);
     
             select.addEventListener("change", function () {
                 updateSelectColor(select);
             });
-        });
     
         function updateSelectColor(select) {
-            let selectedValue = select.value.replace(/ /g, "-"); // Ganti spasi dengan "-"
-            select.className = `print-status-dropdown option-${selectedValue}`;
-        }
-        
+                let selectedValue = select.value.replace(/ /g, "-"); // Replace spaces with "-"
+                select.className = `status-produksi option-${selectedValue}`;
+            }
         
         });
-
-
-
     }
 
 
@@ -401,10 +374,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 <tr><th>ID Pesanan</th><td>${order.id_pesanan || "-"}</td></tr>
                 <tr><th>Admin</th><td>${adminList[order.admin] || "-"}</td></tr>
                 <tr><th>Timestamp</th><td>${order.timestamp || "-"}</td></tr>
-                <tr><th>Deadline</th><td>${formatTanggal(order.deadline) || "-"}</td></tr>
+                <tr><th>Deadline</th><td>${formatTanggal(order.Deadline) || "-"}</td></tr>
                 <tr><th>Quantity</th><td>${order.qty || "-"}</td></tr>
-                <tr><th>Platform</th><td>${order.platform || "-"}</td></tr>
-                <tr><th>Desainer</th><td>${desainerList[order.desainer] || "-"}</td></tr>
+                <tr><th>Platform</th><td>${order.Platform || "-"}</td></tr>
+                <tr><th>Desainer</th><td>${desainerList[order.Desainer] || "-"}</td></tr>
                 <tr><th>Status Print</th><td><span class="badge ${getBadgeClass(order.print_status)}">${order.print_status || "-"}</span></td></tr>
                 <tr><th>Layout Link</th><td>${
                     order.layout_link 
@@ -434,14 +407,10 @@ document.addEventListener("DOMContentLoaded", function () {
     function getBadgeClass(status) {
         switch(status) {
             case '-': return 'bg-primary text-white';
-            case 'EDITING': return 'bg-primary text-white';
-            case 'PRINT VENDOR': return 'bg-light text-dark border';
-            case 'PROSES PRINT': return 'bg-warning text-dark';
-            case 'SELESAI PRINT': return 'bg-danger text-white';
             case 'SEDANG DI-PRESS': return 'bg-indigo text-white';
             case 'SEDANG DI-JAHIT': return 'bg-success text-white';
             case 'TAS SUDAH DI-JAHIT': return 'bg-teal text-white';
-            case 'REJECT:PRINT ULANG': return 'bg-danger text-white';
+            case 'REJECT : PRINT ULANG': return 'bg-danger text-white';
             case 'TAS BLM ADA': return 'bg-danger text-white';
             case 'DONE': return 'bg-success text-white';
             default: return 'bg-secondary text-white';
@@ -534,22 +503,16 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Get the display name for the column based on selected value
         let displayValue = value;
-        if (column === "desainer" && desainerList[value]) {
+        if (column === "id_desain" && desainerList[value]) {
             displayValue = desainerList[value];
-        } else if (column === "penjahit" && penjahitList[value]) {
-            displayValue = penjahitList[value];
-        } else if (column === "qc" && qcList[value]) {
-            displayValue = qcList[value];
         }
         
-        // Column display name
+        // Column display name for user interface
         let columnDisplay = column;
         switch(column) {
-            case "desainer": columnDisplay = "Desainer"; break;
-            case "penjahit": columnDisplay = "Penjahit"; break;
-            case "print_status": columnDisplay = "Status Print"; break;
-            case "layout_link": columnDisplay = "Link Layout"; break;
-            case "qc": columnDisplay = "QC"; break;
+            case "id_desain": columnDisplay = "Desainer"; break;
+            case "status_print": columnDisplay = "Status Print"; break;
+            case "layout_link": columnDisplay = "Layout Link"; break;
         }
         
         confirmMessage.innerText = `Yakin ingin update ${columnDisplay} menjadi "${displayValue}" untuk ID Pesanan ${id_input}?`;
@@ -562,13 +525,20 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function addUpdateEventListeners() {
-        // For all dropdowns with data-column attribute
+        // For all dropdowns with data-column attribute (print-status and desainer)
         document.querySelectorAll("select[data-column]").forEach(select => {
             select.addEventListener("change", function () {
                 const id_input = this.dataset.id;
-                const column = this.dataset.column;
+                let column = this.dataset.column;
                 const value = this.value;
-    
+                
+                // Map the column names to match the API expectations
+                if (column === "print_status") {
+                    column = "status_print";
+                } else if (column === "desainer") {
+                    column = "id_desain";
+                }
+                
                 updateOrderWithConfirmation(id_input, column, value);
             });
         });
@@ -596,23 +566,34 @@ document.addEventListener("DOMContentLoaded", function () {
             if (element) {
                 const originalOrder = allOrders.find(order => order.id_input == popup.dataset.id);
                 if (originalOrder && element.tagName === "SELECT") {
-                    element.value = originalOrder[popup.dataset.column] || "";
+                    // Map back from API field names to UI field names
+                    let fieldName = popup.dataset.column;
+                    if (fieldName === "status_print") {
+                        fieldName = "print_status";
+                    } else if (fieldName === "id_desain") {
+                        fieldName = "desainer";
+                    }
+                    element.value = originalOrder[fieldName] || "";
                 } else if (originalOrder && element.tagName === "INPUT") {
-                    element.value = originalOrder[popup.dataset.column] || "";
+                    let fieldName = popup.dataset.column;
+                    if (fieldName === "layout_link") {
+                        fieldName = "Layout_link"; // Note capital L in "Layout_link"
+                    }
+                    element.value = originalOrder[fieldName] || "";
                 }
             }
         });
     }
     
     function updateOrder(id_input, column, value) {
-        // Use the correct endpoint based on the Python API
+        // Use the correct endpoint from the Flask API
         const endpoint = "http://127.0.0.1:5000/api/update-print-status-layout";
     
         const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
         confirmUpdateBtn.disabled = true;
         confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     
-        // Send the PUT request with the correct parameter names
+        // Send the PUT request with the correct parameter names to match Flask API
         fetch(endpoint, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -627,14 +608,27 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(data => {
             if (data.status === "success") {
                 showResultPopup(`Update berhasil: ${column} -> ${value}`);
-                // In the updateOrder function, look at this part:
+                
+                // Update local data to reflect changes
                 const orderIndex = allOrders.findIndex(order => order.id_input == id_input);
                 if (orderIndex !== -1) {
-                    allOrders[orderIndex][column] = value;
+                    // Map the API field names back to UI field names for local data
+                    if (column === "id_desain") {
+                        allOrders[orderIndex].id_desain = value;
+                    } else if (column === "status_print") {
+                        allOrders[orderIndex].status_print = value;
+                    } else if (column === "layout_link") {
+                        allOrders[orderIndex].Layout_link = value;
+                    } else {
+                        allOrders[orderIndex][column] = value;
+                    }
                     renderOrdersTable(paginateOrders(allOrders));
                 } else {
                     fetchOrders();
                 }
+                
+                // For real-time updates: Consider setting up a WebSocket connection in your code
+                // The server is emitting WebSocket events that could be received here
             } else {
                 showResultPopup(`Update gagal: ${data.message}`, true);
             }
@@ -660,6 +654,47 @@ document.addEventListener("DOMContentLoaded", function () {
             handleDownloadExcel();
         });
     }
+
+    // Add WebSocket functionality to listen for real-time updates
+function setupWebSocketConnection() {
+    // Check if Socket.IO is loaded
+    if (typeof io === 'undefined') {
+        loadScript("https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js")
+            .then(() => {
+                connectWebSocket();
+            })
+            .catch(error => {
+                console.error("Failed to load Socket.IO:", error);
+            });
+    } else {
+        connectWebSocket();
+    }
+}
+
+function connectWebSocket() {
+    const socket = io('http://127.0.0.1:5000');
+    
+    socket.on('connect', function() {
+        console.log('WebSocket connected!');
+    });
+    
+    socket.on('update_event', function(data) {
+        console.log('Received update:', data);
+        // If the update is for an item we're displaying, refresh the data
+        const updatedId = data.id_input;
+        const orderIndex = allOrders.findIndex(order => order.id_input == updatedId);
+        
+        if (orderIndex !== -1) {
+            // Either update just that row or refresh all data
+            fetchOrders();
+        }
+    });
+    
+    socket.on('disconnect', function() {
+        console.log('WebSocket disconnected');
+        // Maybe try to reconnect after a delay
+    });
+}
     
     function handleDownloadPDF() {
         if (!window.currentOrder) {
@@ -747,9 +782,7 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Add data rows in a specific order
         const orderedKeys = [
-            "id_input",  "id_pesanan", "timestamp", "admin", "deadline", "qty", 
-            "platform", "desainer", "print_status", "layout_link", "Status_Produksi", 
-            "penjahit", "qc"
+            "id_input", "timestamp", "Platform", "Deadline", "qty", "Desainer", "status_print"
         ];
         
         orderedKeys.forEach(key => {

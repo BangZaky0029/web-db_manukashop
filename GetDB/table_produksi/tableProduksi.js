@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function () {
         event.preventDefault(); // Hindari reload form
     
         const formData = new FormData(this);
-        const response = await fetch("http://127.0.0.1:5000/api/input-order", {
+        const response = await fetch("http://127.0.0.1:5000/api/get_table_prod", {
             method: "POST",
             body: JSON.stringify(Object.fromEntries(formData)),
             headers: { "Content-Type": "application/json" },
@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function fetchOrders() {
         try {
-            const response = await fetch("http://127.0.0.1:5000/api/get-orders");
+            const response = await fetch("http://127.0.0.1:5000/api/get_table_prod");
             
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -193,66 +193,49 @@ document.addEventListener("DOMContentLoaded", function () {
         orders.forEach(order => {
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>${order.timestamp || "-"}</td>
+                <td>${order.Timestamp || "-"}</td>
                 <td>${order.id_input || "-"}</td>
-                <td>${order.id_pesanan || "-"}</td>
-                <td>${order.platform || "-"}</td>
-                <td>${adminList[order.admin] || "-"}</td>
+                <td>${order.Platform || "-"}</td>
                 <td>${order.qty || "-"}</td>
-                <td>${formatTanggal(order.deadline)}</td>
-                
-                <td>
-                    <select class="desainer-dropdown" data-id="${order.id_input}" data-column="desainer">
-                        <option value="">Pilih Desainer</option>
-                        ${Object.entries(desainerList).map(([id, nama]) =>
-                            `<option value="${id}" ${order.desainer == id ? 'selected' : ''}>${nama}</option>`
-                        ).join('')}
-                    </select>
-                </td>
-    
-                
-                <td>
-                <input type="text" class="layout-link-input" data-id="${order.id_input}" data-column="layout_link"
-                value="${order.layout_link || ''}" placeholder="Masukkan link" />
-                </td>
-                
                 <td>
                 <select class="penjahit-dropdown" data-id="${order.id_input}" data-column="penjahit">
                 <option value="">Pilih Penjahit</option>
                 ${Object.entries(penjahitList).map(([id, nama]) =>
-                            `<option value="${id}" ${order.penjahit == id ? 'selected' : ''}>${nama}</option>`
-                        ).join('')}
-                    </select>
+                    `<option value="${id}" ${order.penjahit == id ? 'selected' : ''}>${nama}</option>`
+                ).join('')}
+                </select>
                 </td>
-    
+                
                 <td>
                 <select class="qc-dropdown" data-id="${order.id_input}" data-column="qc">
                 <option value="">Pilih QC</option>
                 ${Object.entries(qcList).map(([id, nama]) =>
-                            `<option value="${id}" ${order.qc == id ? 'selected' : ''}>${nama}</option>`
-                        ).join('')}
-                    </select>
+                    `<option value="${id}" ${order.qc == id ? 'selected' : ''}>${nama}</option>`
+                ).join('')}
+                </select>
                 </td>
+                <td>${formatTanggal(order.Deadline)}</td>
+                <td>${order.status_print || "-"}</td>
                 <td>
-                    <select class="print-status-dropdown" data-id="${order.id_input}" data-column="print_status">
+                    <select class="status-produksi" data-id="${order.id_input}" data-column="print_status">
                         <option value="-" ${order.print_status === '-' ? 'selected' : ''}>-</option>
-                        <option value="EDITING" ${order.print_status === 'EDITING' ? 'selected' : ''}>EDITING</option>
-                        <option value="PRINT VENDOR" ${order.print_status === 'PRINT VENDOR' ? 'selected' : ''}>PRINT VENDOR</option>
-                        <option value="PROSES PRINT" ${order.print_status === 'PROSES PRINT' ? 'selected' : ''}>PROSES PRINT</option>
-                        <option value="SELESAI PRINT" ${order.print_status === 'SELESAI PRINT' ? 'selected' : ''}>SELESAI PRINT</option>
+                        <option value="SEDANG DI-PRESS" ${order.print_status === 'SEDANG DI-PRESS' ? 'selected' : ''}>SEDANG DI-PRESS</option>
+                        <option value="SEDANG DI-JAHIT" ${order.print_status === 'SEDANG DI-JAHIT' ? 'selected' : ''}>SEDANG DI-JAHIT</option>
+                        <option value="TAS SUDAH DI-JAHIT" ${order.print_status === 'TAS SUDAH DI-JAHIT' ? 'selected' : ''}>TAS SUDAH DI-JAHIT</option>
+                        <option value="REJECT : PRINT ULANG" ${order.print_status === 'REJECT : PRINT ULANG' ? 'selected' : ''}>REJECT : PRINT ULANG</option>
+                        <option value="TAS BLM ADA" ${order.print_status === 'TAS BLM ADA' ? 'selected' : ''}>TAS BLM ADA</option>
+                        <option value="DONE" ${order.print_status === 'DONE' ? 'selected' : ''}>DONE</option>
                     </select>
                 </td>
-                <td>${order.Status_Produksi || "-"}</td>
                 <td>
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button class="delete-icon" data-id="${order.id_input}"><i class="fas fa-trash-alt"></i></button>
-                    <button class="desc-table" data-id="${order.id_input}"><i class="fas fa-info-circle"></i></button>
-                </div>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button class="desc-table" data-id="${order.id_input}"><i class="fas fa-info-circle"></i></button>
+                    </div>
                 </td>
-                `;
-                tableBody.appendChild(row);
-            });
-            
+            `;
+            tableBody.appendChild(row);
+        });
+    
         addDeleteEventListeners();
         addUpdateEventListeners();
         addInputChangeEventListeners();
@@ -264,7 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // Add this to your existing code in tablePesanan.js
     function setupAutoRefresh() {
         // Refresh data every 30 seconds
-        const refreshInterval = 30000;
+        const refreshInterval = 1000;
         
         console.log("Auto refresh enabled - refreshing every " + (refreshInterval/1000) + " seconds");
         
@@ -278,13 +261,13 @@ document.addEventListener("DOMContentLoaded", function () {
     function addInputChangeEventListeners() {
         document.querySelectorAll(".layout-link-input").forEach(input => {
             input.addEventListener("blur", function() {
-                const id_input = this.dataset.id;
+                const id_pesanan = this.dataset.id;
                 const column = this.dataset.column;
                 const value = this.value;
                 
-                updateOrderWithConfirmation(id_input, column, value);
+                updateOrderWithConfirmation(id_pesanan, column, value);
             });
-        document.querySelectorAll(".print-status-dropdown").forEach(select => {
+        document.querySelectorAll(".status-produksi").forEach(select => {
             updateSelectColor(select);
     
             select.addEventListener("change", function () {
@@ -294,7 +277,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
         function updateSelectColor(select) {
             let selectedValue = select.value.replace(/ /g, "-"); // Ganti spasi dengan "-"
-            select.className = `print-status-dropdown option-${selectedValue}`;
+            select.className = `status-produksi option-${selectedValue}`;
         }
         
         
@@ -434,14 +417,10 @@ document.addEventListener("DOMContentLoaded", function () {
     function getBadgeClass(status) {
         switch(status) {
             case '-': return 'bg-primary text-white';
-            case 'EDITING': return 'bg-primary text-white';
-            case 'PRINT VENDOR': return 'bg-light text-dark border';
-            case 'PROSES PRINT': return 'bg-warning text-dark';
-            case 'SELESAI PRINT': return 'bg-danger text-white';
             case 'SEDANG DI-PRESS': return 'bg-indigo text-white';
             case 'SEDANG DI-JAHIT': return 'bg-success text-white';
             case 'TAS SUDAH DI-JAHIT': return 'bg-teal text-white';
-            case 'REJECT:PRINT ULANG': return 'bg-danger text-white';
+            case 'REJECT : PRINT ULANG': return 'bg-danger text-white';
             case 'TAS BLM ADA': return 'bg-danger text-white';
             case 'DONE': return 'bg-success text-white';
             default: return 'bg-secondary text-white';
@@ -545,10 +524,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // Column display name
         let columnDisplay = column;
         switch(column) {
-            case "desainer": columnDisplay = "Desainer"; break;
             case "penjahit": columnDisplay = "Penjahit"; break;
-            case "print_status": columnDisplay = "Status Print"; break;
-            case "layout_link": columnDisplay = "Link Layout"; break;
             case "qc": columnDisplay = "QC"; break;
         }
         
@@ -747,9 +723,7 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Add data rows in a specific order
         const orderedKeys = [
-            "id_input",  "id_pesanan", "timestamp", "admin", "deadline", "qty", 
-            "platform", "desainer", "print_status", "layout_link", "Status_Produksi", 
-            "penjahit", "qc"
+            "id_input", "timestamp", "platform", "status_print", "deadline", "qty", "penjahit", "qc"
         ];
         
         orderedKeys.forEach(key => {

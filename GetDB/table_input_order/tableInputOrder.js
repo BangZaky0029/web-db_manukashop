@@ -4,13 +4,15 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentPage = 1;
     let totalPages = 1;
     let ordersData = [];
+    let allOrdersData = [];
 
     function fetchOrders() {
         fetch("http://127.0.0.1:5000/api/get-input-table")  // Sesuaikan dengan API kamu
             .then(response => response.json())
             .then(data => {
                 if (data.status === "success") {
-                    ordersData = data.data;
+                    allOrdersData = data.data;
+                    ordersData = [...allOrdersData];
                     totalPages = Math.ceil(ordersData.length / 10);
                     renderTable();
                 }
@@ -30,12 +32,15 @@ document.addEventListener("DOMContentLoaded", function () {
         let paginatedOrders = ordersData.slice(start, end);
 
         paginatedOrders.forEach(order => {
+            // Add platform-specific class
+            let platformClass = order.Platform.toLowerCase().replace(/\s/g, '');
+            
             let row = `<tr>
                 <td>${order.TimeTemp}</td>
                 <td>${order.id_input}</td>
                 <td>${order.id_pesanan}</td>
-                <td>${adminList[order.ID]}</td>
-                <td>${order.Platform}</td>
+                <td>${adminList[order.ID] || order.ID}</td>
+                <td class="platform-${platformClass}">${order.Platform}</td>
                 <td>${order.qty}</td>
                 <td>${order.nama_ket}</td>
                 <td><a href="${order.link}" target="_blank">Lihat</a></td>
@@ -45,6 +50,21 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         pageInfo.textContent = `Halaman ${currentPage} dari ${totalPages}`;
+        
+        // Disable/enable pagination buttons
+        document.getElementById("prevPage").disabled = currentPage === 1;
+        document.getElementById("nextPage").disabled = currentPage === totalPages;
+    }
+
+    function updateData() {
+        if (isUpdating) return;  // Hindari multiple update saat masih proses
+        isUpdating = true;
+
+        fetchOrders();
+
+        setTimeout(() => {
+            isUpdating = false;
+        }, 1000);  // Hindari terlalu sering update agar UI tetap responsif
     }
 
     document.getElementById("prevPage").addEventListener("click", function () {
@@ -63,42 +83,41 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.getElementById("searchBtn").addEventListener("click", function () {
         let searchValue = document.getElementById("searchInput").value.toLowerCase();
-        let filteredOrders = ordersData.filter(order => order.id_pesanan.toLowerCase().includes(searchValue));
-        ordersData = filteredOrders;
+        ordersData = allOrdersData.filter(order => 
+            order.id_pesanan.toLowerCase().includes(searchValue) ||
+            order.id_input.toLowerCase().includes(searchValue)
+        );
+        currentPage = 1;
+        totalPages = Math.ceil(ordersData.length / 10);
         renderTable();
     });
 
     document.getElementById("refreshBtn").addEventListener("click", function () {
+        document.getElementById("searchInput").value = "";
+        document.getElementById("platformFilter").value = "all";
         fetchOrders();
     });
 
     document.getElementById("platformFilter").addEventListener("change", function () {
         let selectedPlatform = this.value;
         if (selectedPlatform === "all") {
-            fetchOrders();
+            ordersData = [...allOrdersData];
         } else {
-            ordersData = ordersData.filter(order => order.Platform === selectedPlatform);
-            renderTable();
+            ordersData = allOrdersData.filter(order => order.Platform === selectedPlatform);
         }
+        currentPage = 1;
+        totalPages = Math.ceil(ordersData.length / 10);
+        renderTable();
     });
 
+    // Search on key press (Enter)
+    document.getElementById("searchInput").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            document.getElementById("searchBtn").click();
+        }
+    });
+    // Auto Refresh Data Tanpa Mengganggu Interaksi
+    setInterval(updateData, 5000);  // Update setiap 5 detik tanpa blocking
+
     fetchOrders();
-    // Call this function at the end of your DOMContentLoaded event
-    // setupAutoRefresh();
-
 });
-
-// Auto refresh function - add this after your other code
-function setupAutoRefresh() {
-    // Refresh data every 30 seconds (30000 milliseconds)
-    // You can adjust this interval as needed
-    const refreshInterval = 30000; 
-    
-    console.log("Auto refresh enabled - refreshing every " + (refreshInterval/1000) + " seconds");
-    
-    // Set up the interval timer
-    setInterval(() => {
-        console.log("Auto refreshing data...");
-        fetchOrders();
-    }, refreshInterval);
-}
