@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Setup PDF and Excel buttons
             setupDownloadButtons();
             // Setup WebSocket for real-time updates
-            // setupWebSocketConnection();
+            setupWebSocketConnection();
         } catch (error) {
             console.error("Error initializing app:", error);
             showResultPopup("Gagal memuat aplikasi. Silakan refresh halaman.", true);
@@ -236,30 +236,37 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function addInputChangeEventListeners() {
-        // Layout link input field listeners
+        // ✅ Event listener untuk input layout link (diperbarui saat blur)
         document.querySelectorAll(".layout-link-input").forEach(input => {
             input.addEventListener("blur", function() {
-                const id_input = this.dataset.id;
-                const column = "layout_link";  // Changed to match the API expectations
+                const id_pesanan = this.dataset.id;
+                const column = this.dataset.column;
                 const value = this.value;
                 
-                updateOrderWithConfirmation(id_input, column, value);
+                updateOrderWithConfirmation(id_pesanan, column, value);
             });
         });
-        document.querySelectorAll(".status-produksi").forEach(select => {
-            updateSelectColor(select);
     
+        // ✅ Event listener untuk dropdown status produksi (diperbarui saat diubah)
+        document.querySelectorAll(".status-print").forEach(select => {
             select.addEventListener("change", function () {
-                updateSelectColor(select);
+                const id_input = this.dataset.id;
+                const column = this.dataset.column;
+                const value = this.value;
+    
+                updateOrder(id_input, column, value); // Pastikan fungsi dipanggil dengan parameter yang benar
             });
     
-        function updateSelectColor(select) {
-                let selectedValue = select.value.replace(/ /g, "-"); // Replace spaces with "-"
-                select.className = `status-produksi option-${selectedValue}`;
-            }
-        
+            updateSelectColor(select); // ✅ Pindahkan ini agar dijalankan setelah event listener ditambahkan
         });
+    
+        // ✅ Fungsi untuk mengubah warna berdasarkan status print
+        function updateSelectColor(select) {
+            let selectedValue = select.value.replace(/ /g, "-"); // Ganti spasi dengan "-"
+            select.className = `status-print option-${selectedValue}`;
+        }
     }
+    
 
 
     async function fetchReferenceData() {
@@ -570,53 +577,63 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function updateOrder(id_input, column, value) {
-        // Use the correct endpoint from the Flask API
-        const endpoint = "http://127.0.0.1:5000/api/update-print-status-layout";
-    
+        const endpointPesanan = "http://127.0.0.1:5000/api/update-print-status-layout";
+        const endpointProd = "http://127.0.0.1:5000/api/update-design";
+        
         const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
-        confirmUpdateBtn.disabled = false; // 🔓 Enable kembali
-        confirmUpdateBtn.disabled = true;
+        confirmUpdateBtn.disabled = true; 
         confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     
-        // Send the PUT request with the correct parameter names to match Flask API
-        fetch(endpoint, {
+        // Fungsi untuk update ke table_pesanan
+        fetch(endpointPesanan, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id_input, column, value })
         })
-
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+                throw new Error(`Gagal update table_pesanan! Status: ${response.status}`);
+            } 
             return response.json();
+        })
+        .then(data => {
+            if (data.status === "success") {
+                console.log("Update table_pesanan berhasil:", data);
+                
+                // Jika yang diupdate adalah "status_print", update juga di table_prod
+                if (column === "status_print") {
+                    return fetch(endpointProd, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id_input, column, value })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Gagal update table_prod! Status: ${response.status}`);
+                        }
+                        return response.json();
+                    });
+                } else {
+                    return { status: "success", message: "Tidak perlu update table_prod" };
+                }
+            } else {
+                throw new Error(`Update table_pesanan gagal: ${data.message}`);
+            }
         })
         .then(data => {
             if (data.status === "success") {
                 showResultPopup(`Update berhasil: ${column} -> ${value}`);
                 
-                // Update local data to reflect changes
+                // Update data lokal untuk merefleksikan perubahan
                 const orderIndex = allOrders.findIndex(order => order.id_input == id_input);
                 if (orderIndex !== -1) {
-                    // Map the API field names back to UI field names for local data
-                    if (column === "id_desain") {
-                        allOrders[orderIndex].id_desain = value;
-                    } else if (column === "status_print") {
-                        allOrders[orderIndex].status_print = value;
-                    } else if (column === "layout_link") {
-                        allOrders[orderIndex].Layout_link = value;
-                    } else {
-                        allOrders[orderIndex][column] = value;
-                    }
+                    allOrders[orderIndex][column] = value;
                     renderOrdersTable(paginateOrders(allOrders));
                 } else {
                     fetchOrders();
                 }
-                
-                // For real-time updates: Consider setting up a WebSocket connection in your code
-                // The server is emitting WebSocket events that could be received here
             } else {
-                showResultPopup(`Update gagal: ${data.message}`, true);
+                showResultPopup(`Update table_prod gagal: ${data.message}`, true);
             }
         })
         .catch(error => {
@@ -625,10 +642,10 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .finally(() => {
             confirmUpdateBtn.disabled = false;
-            confirmUpdateBtn.disabled = false; // 🔓 Enable kembali
             confirmUpdateBtn.innerHTML = 'Ya, Update';
         });
     }
+    
     
     function setupDownloadButtons() {
         // PDF Download button
@@ -642,46 +659,39 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Add WebSocket functionality to listen for real-time updates
-function setupWebSocketConnection() {
-    // Check if Socket.IO is loaded
-    if (typeof io === 'undefined') {
-        loadScript("https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js")
-            .then(() => {
-                connectWebSocket();
-            })
-            .catch(error => {
-                console.error("Failed to load Socket.IO:", error);
-            });
-    } else {
-        connectWebSocket();
-    }
-}
-
-function connectWebSocket() {
-    const socket = io('http://127.0.0.1:5000');
-    
-    socket.on('connect', function() {
-        console.log('WebSocket connected!');
-    });
-    
-    socket.on('update_event', function(data) {
-        console.log('Received update:', data);
-        // If the update is for an item we're displaying, refresh the data
-        const updatedId = data.id_input;
-        const orderIndex = allOrders.findIndex(order => order.id_input == updatedId);
-        
-        if (orderIndex !== -1) {
-            // Either update just that row or refresh all data
-            fetchOrders();
+        // Add WebSocket functionality to listen for real-time updates
+    function setupWebSocketConnection() {
+        // Check if Socket.IO is loaded
+        if (typeof io === 'undefined') {
+            loadScript("https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js")
+                .then(() => {
+                    connectWebSocket();
+                })
+                .catch(error => {
+                    console.error("Failed to load Socket.IO:", error);
+                });
+        } else {
+            connectWebSocket();
         }
-    });
-    
-    socket.on('disconnect', function() {
-        console.log('WebSocket disconnected');
-        // Maybe try to reconnect after a delay
-    });
-}
+    }
+
+        function connectWebSocket() {
+            const socket = io('http://127.0.0.1:5000', {
+                transports: ['websocket', 'polling'],
+                withCredentials: true
+            });
+            
+            
+            socket.on('connect', function() {
+                console.log('✅ WebSocket Connected!');
+            });
+            
+            socket.on('disconnect', function() {
+                console.warn('⚠️ WebSocket Disconnected');
+            });
+            
+        }
+
     
     function handleDownloadPDF() {
         if (!window.currentOrder) {

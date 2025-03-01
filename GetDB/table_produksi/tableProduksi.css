@@ -474,30 +474,22 @@ select:focus, input[type="text"]:focus {
     }
 }
 
-.print-status-dropdown {
+.status-produksi {
     padding: 5px;
     border-radius: 20px;
     font-weight: bold;
 }
 
 /* Warna tiap status */
-.print-status-dropdown.option-EDITING { 
-    background-color: #4169E1; color: white; } /* Biru */
-.print-status-dropdown.option-PRINT-VENDOR { 
-    background-color: #FF6347; color: white; } /* Merah salmon */
-.print-status-dropdown.option-PROSES-PRINT { 
-    background-color: #FFD700; color: black; } /* Kuning */
-.print-status-dropdown.option-SELESAI-PRINT { 
-    background-color: #800080; color: white; } /* Ungu */
-.print-status-dropdown.option-SEDANG-DI-PRESS 
+.status-produksi.option-SEDANG-DI-PRESS 
 { background-color: #1E90FF; color: white; } /* Biru muda */
-.print-status-dropdown.option-SEDANG-DI-JAHIT { 
+.status-produksi.option-SEDANG-DI-JAHIT { 
     background-color: #32CD32; color: white; } /* Hijau */
-.print-status-dropdown.option-TAS-SUDAH-DI-JAHIT { 
+.status-produksi.option-TAS-SUDAH-DI-JAHIT { 
     background-color: #228B22; color: white; } /* Hijau gelap */
-.print-status-dropdown.option-REJECT-PRINT-ULANG { 
+.status-produksi.option-REJECT-PRINT-ULANG { 
     background-color: #FF0000; color: white; } /* Merah */
-.print-status-dropdown.option-TAS-BLM-ADA { 
+.status-produksi.option-TAS-BLM-ADA { 
     background-color: #8B008B; color: white; } /* Ungu tua */
-.print-status-dropdown.option-DONE { 
+.status-produksi.option-DONE { 
     background-color: #008000; color: white; } /* Hijau */

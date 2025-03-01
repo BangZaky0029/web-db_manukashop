@@ -27,11 +27,48 @@ document.addEventListener("DOMContentLoaded", function () {
             setupFilterAndSearch();
             // Setup PDF and Excel buttons
             setupDownloadButtons();
+            setupWebSocketConnection();
         } catch (error) {
             console.error("Error initializing app:", error);
             showResultPopup("Gagal memuat aplikasi. Silakan refresh halaman.", true);
         }
     }
+
+
+     // Add WebSocket functionality to listen for real-time updates
+     function setupWebSocketConnection() {
+        // Check if Socket.IO is loaded
+        if (typeof io === 'undefined') {
+            loadScript("https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js")
+                .then(() => {
+                    connectWebSocket();
+                })
+                .catch(error => {
+                    console.error("Failed to load Socket.IO:", error);
+                });
+        } else {
+            connectWebSocket();
+        }
+    }
+
+        function connectWebSocket() {
+            const socket = io('http://127.0.0.1:5000', {
+                transports: ['websocket', 'polling'],
+                withCredentials: true
+            });
+            socket.on('update_event', function(data) {
+                console.log('🔄 Received update:', data);
+                fetchOrders();  // Ambil data terbaru saat ada perubahan
+            });            
+            socket.on('connect', function() {
+                console.log('✅ WebSocket Connected!');
+            });
+            
+            socket.on('disconnect', function() {
+                console.warn('⚠️ WebSocket Disconnected');
+            });
+            
+        }
 
     document.getElementById("inputForm").addEventListener("submit", async function (event) {
         event.preventDefault(); // Hindari reload form
@@ -198,10 +235,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${order.Platform || "-"}</td>
                 <td>${order.qty || "-"}</td>
                 <td>
-                <select class="penjahit-dropdown" data-id="${order.id_input}" data-column="penjahit">
+                <select class="penjahit-dropdown" data-id="${order.id_input}" data-column="Penjahit">
                 <option value="">Pilih Penjahit</option>
                 ${Object.entries(penjahitList).map(([id, nama]) =>
-                    `<option value="${id}" ${order.penjahit == id ? 'selected' : ''}>${nama}</option>`
+                    `<option value="${id}" ${order.Penjahit == id ? 'selected' : ''}>${nama}</option>`
                 ).join('')}
                 </select>
                 </td>
@@ -217,14 +254,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${formatTanggal(order.Deadline)}</td>
                 <td>${order.status_print || "-"}</td>
                 <td>
-                    <select class="status-produksi" data-id="${order.id_input}" data-column="print_status">
-                        <option value="-" ${order.print_status === '-' ? 'selected' : ''}>-</option>
-                        <option value="SEDANG DI-PRESS" ${order.print_status === 'SEDANG DI-PRESS' ? 'selected' : ''}>SEDANG DI-PRESS</option>
-                        <option value="SEDANG DI-JAHIT" ${order.print_status === 'SEDANG DI-JAHIT' ? 'selected' : ''}>SEDANG DI-JAHIT</option>
-                        <option value="TAS SUDAH DI-JAHIT" ${order.print_status === 'TAS SUDAH DI-JAHIT' ? 'selected' : ''}>TAS SUDAH DI-JAHIT</option>
-                        <option value="REJECT : PRINT ULANG" ${order.print_status === 'REJECT : PRINT ULANG' ? 'selected' : ''}>REJECT : PRINT ULANG</option>
-                        <option value="TAS BLM ADA" ${order.print_status === 'TAS BLM ADA' ? 'selected' : ''}>TAS BLM ADA</option>
-                        <option value="DONE" ${order.print_status === 'DONE' ? 'selected' : ''}>DONE</option>
+                    <select class="status-produksi" data-id="${order.id_input}" data-column="Status_Produksi">
+                        <option value="-" ${order.Status_Produksi === '-' ? 'selected' : ''}>-</option>
+                        <option value="SEDANG DI-PRESS" ${order.Status_Produksi === 'SEDANG DI-PRESS' ? 'selected' : ''}>SEDANG DI-PRESS</option>
+                        <option value="SEDANG DI-JAHIT" ${order.Status_Produksi === 'SEDANG DI-JAHIT' ? 'selected' : ''}>SEDANG DI-JAHIT</option>
+                        <option value="TAS SUDAH DI-JAHIT" ${order.Status_Produksi === 'TAS SUDAH DI-JAHIT' ? 'selected' : ''}>TAS SUDAH DI-JAHIT</option>
+                        <option value="REJECT PRINT ULANG" ${order.Status_Produksi === 'REJECT PRINT ULANG' ? 'selected' : ''}>REJECTPRINT ULANG</option>
+                        <option value="TAS BLM ADA" ${order.Status_Produksi === 'TAS BLM ADA' ? 'selected' : ''}>TAS BLM ADA</option>
+                        <option value="DONE" ${order.Status_Produksi === 'DONE' ? 'selected' : ''}>DONE</option>
                     </select>
                 </td>
                 <td>
@@ -259,33 +296,26 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function addInputChangeEventListeners() {
-        document.querySelectorAll(".layout-link-input").forEach(input => {
-            input.addEventListener("blur", function() {
-                const id_pesanan = this.dataset.id;
+        // ✅ Event listener untuk dropdown status produksi (diperbarui saat diubah)
+        document.querySelectorAll(".status-produksi").forEach(select => {
+            select.addEventListener("change", function () {
+                const id_input = this.dataset.id;
                 const column = this.dataset.column;
                 const value = this.value;
-                
-                updateOrderWithConfirmation(id_pesanan, column, value);
-            });
-        document.querySelectorAll(".status-produksi").forEach(select => {
-            updateSelectColor(select);
     
-            select.addEventListener("change", function () {
-                updateSelectColor(select);
+                updateOrder(id_input, column, value); // Pastikan fungsi dipanggil dengan parameter yang benar
             });
+    
+            updateSelectColor(select); // ✅ Pindahkan ini agar dijalankan setelah event listener ditambahkan
         });
     
+        // ✅ Fungsi untuk mengubah warna berdasarkan status produksi
         function updateSelectColor(select) {
             let selectedValue = select.value.replace(/ /g, "-"); // Ganti spasi dengan "-"
             select.className = `status-produksi option-${selectedValue}`;
         }
-        
-        
-        });
-
-
-
     }
+    
 
 
     async function fetchReferenceData() {
@@ -394,7 +424,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     ? `<a href="${order.layout_link}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-link"></i> Buka Link</a>`
                     : "-"
                 }</td></tr>
-                <tr><th>Penjahit</th><td>${penjahitList[order.penjahit] || "-"}</td></tr>
+                <tr><th>Penjahit</th><td>${penjahitList[order.Penjahit] || "-"}</td></tr>
                 <tr><th>QC</th><td>${qcList[order.qc] || "-"}</td></tr>
                 <tr><th>Link Foto</th><td>${
                     linkFoto && linkFoto !== "-" 
@@ -420,7 +450,7 @@ document.addEventListener("DOMContentLoaded", function () {
             case 'SEDANG DI-PRESS': return 'bg-indigo text-white';
             case 'SEDANG DI-JAHIT': return 'bg-success text-white';
             case 'TAS SUDAH DI-JAHIT': return 'bg-teal text-white';
-            case 'REJECT : PRINT ULANG': return 'bg-danger text-white';
+            case 'REJECT PRINT ULANG': return 'bg-danger text-white';
             case 'TAS BLM ADA': return 'bg-danger text-white';
             case 'DONE': return 'bg-success text-white';
             default: return 'bg-secondary text-white';
@@ -513,18 +543,17 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Get the display name for the column based on selected value
         let displayValue = value;
-        if (column === "desainer" && desainerList[value]) {
-            displayValue = desainerList[value];
-        } else if (column === "penjahit" && penjahitList[value]) {
-            displayValue = penjahitList[value];
-        } else if (column === "qc" && qcList[value]) {
-            displayValue = qcList[value];
-        }
+            if (column === "Penjahit" && penjahitList[value]) {
+                displayValue = penjahitList[value];
+            } else if (column === "qc" && qcList[value]) {
+                displayValue = qcList[value];
+            }
+
         
         // Column display name
         let columnDisplay = column;
         switch(column) {
-            case "penjahit": columnDisplay = "Penjahit"; break;
+            case "Penjahit": columnDisplay = "Penjahit"; break;
             case "qc": columnDisplay = "QC"; break;
         }
         
@@ -544,7 +573,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 const id_input = this.dataset.id;
                 const column = this.dataset.column;
                 const value = this.value;
-    
+
+                console.log("📤 Sending Update Request:", { id_input, column, value }); // Debugging
                 updateOrderWithConfirmation(id_input, column, value);
             });
         });
@@ -581,14 +611,29 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function updateOrder(id_input, column, value) {
-        // Use the correct endpoint based on the Python API
-        const endpoint = "http://127.0.0.1:5000/api/update-print-status-layout";
+        // Pastikan hanya menggunakan endpoint sync-prod-to-pesanan
+        const endpoint = "http://127.0.0.1:5000/api/sync-prod-to-pesanan";
+        console.log("📤 Sending Update Request:", { id_input, column, value });
+        if (!id_input || !column) {
+            console.error("❌ Gagal mengirim update: id_input atau column tidak valid");
+            showResultPopup("ID Input atau Column tidak valid!", true);
+            return;
+        }
+        
+        // Validasi kolom yang diperbolehkan
+        const allowedColumns = ["Penjahit", "qc", "Status_Produksi"];
+    
+        if (!allowedColumns.includes(column)) {
+            console.error("❌ Kolom tidak valid untuk update.");
+            showResultPopup(`Kolom tidak valid: ${column}`, true);
+            return;
+        }
     
         const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
         confirmUpdateBtn.disabled = true;
         confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     
-        // Send the PUT request with the correct parameter names
+        // Kirim request PUT ke endpoint yang benar
         fetch(endpoint, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -602,8 +647,9 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .then(data => {
             if (data.status === "success") {
-                showResultPopup(`Update berhasil: ${column} -> ${value}`);
-                // In the updateOrder function, look at this part:
+                showResultPopup(`✅ Update berhasil: ${column} -> ${value}`);
+    
+                // Update data di UI
                 const orderIndex = allOrders.findIndex(order => order.id_input == id_input);
                 if (orderIndex !== -1) {
                     allOrders[orderIndex][column] = value;
@@ -612,11 +658,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     fetchOrders();
                 }
             } else {
-                showResultPopup(`Update gagal: ${data.message}`, true);
+                showResultPopup(`⚠️ Update gagal: ${data.message}`, true);
             }
         })
         .catch(error => {
-            console.error("Error:", error);
+            console.error("❌ Error:", error);
             showResultPopup(`Terjadi kesalahan saat update: ${error.message}`, true);
         })
         .finally(() => {
@@ -624,6 +670,8 @@ document.addEventListener("DOMContentLoaded", function () {
             confirmUpdateBtn.innerHTML = 'Ya, Update';
         });
     }
+    
+    
     
     function setupDownloadButtons() {
         // PDF Download button
@@ -700,7 +748,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 valueFormatted = formatTanggal(value);
             } else if (key === "desainer" && desainerList[value]) {
                 valueFormatted = desainerList[value];
-            } else if (key === "penjahit" && penjahitList[value]) {
+            } else if (key === "Penjahit" && penjahitList[value]) {
                 valueFormatted = penjahitList[value];
             } else if (key === "qc" && qcList[value]) {
                 valueFormatted = qcList[value];
@@ -723,7 +771,7 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Add data rows in a specific order
         const orderedKeys = [
-            "id_input", "timestamp", "platform", "status_print", "deadline", "qty", "penjahit", "qc"
+            "id_input", "timestamp", "platform", "status_print", "deadline", "qty", "Penjahit", "qc", "Status_Produksi"
         ];
         
         orderedKeys.forEach(key => {
@@ -793,8 +841,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (processedOrder.desainer && desainerList[processedOrder.desainer]) {
             processedOrder.desainer = desainerList[processedOrder.desainer];
         }
-        if (processedOrder.penjahit && penjahitList[processedOrder.penjahit]) {
-            processedOrder.penjahit = penjahitList[processedOrder.penjahit];
+        if (processedOrder.penjahit && penjahitList[processedOrder.Penjahit]) {
+            processedOrder.penjahit = penjahitList[processedOrder.Penjahit];
         }
         if (processedOrder.qc && qcList[processedOrder.qc]) {
             processedOrder.qc = qcList[processedOrder.qc];

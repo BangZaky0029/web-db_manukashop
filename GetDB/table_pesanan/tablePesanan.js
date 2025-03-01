@@ -200,48 +200,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${adminList[order.admin] || "-"}</td>
                 <td>${order.qty || "-"}</td>
                 <td>${formatTanggal(order.deadline)}</td>
-                
+                <td>${desainerList[order.desainer] || "-"}</td>
                 <td>
-                    <select class="desainer-dropdown" data-id="${order.id_input}" data-column="desainer">
-                        <option value="">Pilih Desainer</option>
-                        ${Object.entries(desainerList).map(([id, nama]) =>
-                            `<option value="${id}" ${order.desainer == id ? 'selected' : ''}>${nama}</option>`
-                        ).join('')}
-                    </select>
+                    ${order.layout_link ? `<a href="${order.layout_link}" target="_blank">Lihat Layout</a>` : "-"}
                 </td>
-    
-                
-                <td>
-                <input type="text" class="layout-link-input" data-id="${order.id_input}" data-column="layout_link"
-                value="${order.layout_link || ''}" placeholder="Masukkan link" />
-                </td>
-                
-                <td>
-                <select class="penjahit-dropdown" data-id="${order.id_input}" data-column="penjahit">
-                <option value="">Pilih Penjahit</option>
-                ${Object.entries(penjahitList).map(([id, nama]) =>
-                            `<option value="${id}" ${order.penjahit == id ? 'selected' : ''}>${nama}</option>`
-                        ).join('')}
-                    </select>
-                </td>
-    
-                <td>
-                <select class="qc-dropdown" data-id="${order.id_input}" data-column="qc">
-                <option value="">Pilih QC</option>
-                ${Object.entries(qcList).map(([id, nama]) =>
-                            `<option value="${id}" ${order.qc == id ? 'selected' : ''}>${nama}</option>`
-                        ).join('')}
-                    </select>
-                </td>
-                <td>
-                    <select class="print-status-dropdown" data-id="${order.id_input}" data-column="print_status">
-                        <option value="-" ${order.print_status === '-' ? 'selected' : ''}>-</option>
-                        <option value="EDITING" ${order.print_status === 'EDITING' ? 'selected' : ''}>EDITING</option>
-                        <option value="PRINT VENDOR" ${order.print_status === 'PRINT VENDOR' ? 'selected' : ''}>PRINT VENDOR</option>
-                        <option value="PROSES PRINT" ${order.print_status === 'PROSES PRINT' ? 'selected' : ''}>PROSES PRINT</option>
-                        <option value="SELESAI PRINT" ${order.print_status === 'SELESAI PRINT' ? 'selected' : ''}>SELESAI PRINT</option>
-                    </select>
-                </td>
+                <td>${penjahitList[order.penjahit] || "-"}</td>
+                <td>${qcList[order.qc] || "-"}</td>
+                <td>${order.print_status || "-"}</td>
                 <td>${order.Status_Produksi || "-"}</td>
                 <td>
                 <div style="display: flex; gap: 10px; justify-content: center;">
