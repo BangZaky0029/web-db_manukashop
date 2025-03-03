@@ -27,7 +27,6 @@ document.addEventListener("DOMContentLoaded", function () {
             // Setup PDF and Excel buttons
             setupDownloadButtons();
             // Setup WebSocket for real-time updates
-            setupWebSocketConnection();
         } catch (error) {
             console.error("Error initializing app:", error);
             showResultPopup("Gagal memuat aplikasi. Silakan refresh halaman.", true);
@@ -362,8 +361,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const linkFoto = await fetchLinkFoto(order.id_input);
             
             modalBody.innerHTML = `
-                <tr><th>ID Pesanan</th><td>${order.id_pesanan || "-"}</td></tr>
-                <tr><th>Admin</th><td>${adminList[order.admin] || "-"}</td></tr>
+                <tr><th>ID INPUT</th><td>${order.id_input || "-"}</td></tr>
+                <tr><th>Admin</th><td>${adminList[order.id_admin] || "-"}</td></tr>
                 <tr><th>Timestamp</th><td>${order.timestamp || "-"}</td></tr>
                 <tr><th>Deadline</th><td>${formatTanggal(order.deadline) || "-"}</td></tr>
                 <tr><th>Quantity</th><td>${order.qty || "-"}</td></tr>
@@ -577,63 +576,36 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function updateOrder(id_input, column, value) {
-        const endpointPesanan = "http://127.0.0.1:5000/api/update-print-status-layout";
-        const endpointProd = "http://127.0.0.1:5000/api/update-design";
-        
+        const endpoint = column === "id_designer" || column === "layout_link" || column === "status_print" 
+            ? "http://127.0.0.1:5000/api/update-design"
+            : "http://127.0.0.1:5000/api/update-print-status-layout";
+    
         const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
-        confirmUpdateBtn.disabled = true; 
+        confirmUpdateBtn.disabled = true;
         confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     
-        // Fungsi untuk update ke table_pesanan
-        fetch(endpointPesanan, {
+        fetch(endpoint, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id_input, column, value })
+            body: JSON.stringify({
+                id_input: id_input,
+                id_designer: column === "id_designer" ? value : undefined,  
+                column: column,
+                value: value
+            })
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`Gagal update table_pesanan! Status: ${response.status}`);
+                throw new Error(`Gagal update! Status: ${response.status}`);
             } 
             return response.json();
         })
         .then(data => {
             if (data.status === "success") {
-                console.log("Update table_pesanan berhasil:", data);
-                
-                // Jika yang diupdate adalah "status_print", update juga di table_prod
-                if (column === "status_print") {
-                    return fetch(endpointProd, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ id_input, column, value })
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Gagal update table_prod! Status: ${response.status}`);
-                        }
-                        return response.json();
-                    });
-                } else {
-                    return { status: "success", message: "Tidak perlu update table_prod" };
-                }
-            } else {
-                throw new Error(`Update table_pesanan gagal: ${data.message}`);
-            }
-        })
-        .then(data => {
-            if (data.status === "success") {
                 showResultPopup(`Update berhasil: ${column} -> ${value}`);
-                
-                // Update data lokal untuk merefleksikan perubahan
-                const orderIndex = allOrders.findIndex(order => order.id_input == id_input);
-                if (orderIndex !== -1) {
-                    allOrders[orderIndex][column] = value;
-                    renderOrdersTable(paginateOrders(allOrders));
-                } else {
-                    fetchOrders();
-                }
+                fetchOrders(); // Ambil data terbaru setelah update sukses
             } else {
-                showResultPopup(`Update table_prod gagal: ${data.message}`, true);
+                showResultPopup(`Update gagal: ${data.message}`, true);
             }
         })
         .catch(error => {
@@ -647,6 +619,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     
+    
     function setupDownloadButtons() {
         // PDF Download button
         document.getElementById("downloadPDF").addEventListener("click", function() {
@@ -658,40 +631,6 @@ document.addEventListener("DOMContentLoaded", function () {
             handleDownloadExcel();
         });
     }
-
-        // Add WebSocket functionality to listen for real-time updates
-    function setupWebSocketConnection() {
-        // Check if Socket.IO is loaded
-        if (typeof io === 'undefined') {
-            loadScript("https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js")
-                .then(() => {
-                    connectWebSocket();
-                })
-                .catch(error => {
-                    console.error("Failed to load Socket.IO:", error);
-                });
-        } else {
-            connectWebSocket();
-        }
-    }
-
-        function connectWebSocket() {
-            const socket = io('http://127.0.0.1:5000', {
-                transports: ['websocket', 'polling'],
-                withCredentials: true
-            });
-            
-            
-            socket.on('connect', function() {
-                console.log('✅ WebSocket Connected!');
-            });
-            
-            socket.on('disconnect', function() {
-                console.warn('⚠️ WebSocket Disconnected');
-            });
-            
-        }
-
     
     function handleDownloadPDF() {
         if (!window.currentOrder) {
@@ -754,13 +693,13 @@ document.addEventListener("DOMContentLoaded", function () {
             
             if (key === "deadline") {
                 valueFormatted = formatTanggal(value);
-            } else if (key === "desainer" && desainerList[value]) {
+            } else if (key === "id_desainer" && desainerList[value]) {
                 valueFormatted = desainerList[value];
-            } else if (key === "penjahit" && penjahitList[value]) {
+            } else if (key === "id_enjahit" && penjahitList[value]) {
                 valueFormatted = penjahitList[value];
-            } else if (key === "qc" && qcList[value]) {
+            } else if (key === "id_qc" && qcList[value]) {
                 valueFormatted = qcList[value];
-            } else if (key === "admin" && adminList[value]) {
+            } else if (key === "id_ admin" && adminList[value]) {
                 valueFormatted = adminList[value];
             }
             
@@ -855,8 +794,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (processedOrder.qc && qcList[processedOrder.qc]) {
             processedOrder.qc = qcList[processedOrder.qc];
         }
-        if (processedOrder.admin && adminList[processedOrder.admin]) {
-            processedOrder.admin = adminList[processedOrder.admin];
+        if (processedOrder.id_admin && adminList[processedOrder.id_admin]) {
+            processedOrder.id_admin = adminList[processedOrder.id_admin];
         }
         
         const wb = XLSX.utils.book_new();

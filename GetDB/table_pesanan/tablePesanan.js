@@ -181,9 +181,8 @@ document.addEventListener("DOMContentLoaded", function () {
     
         const day = String(dateObj.getDate()).padStart(2, '0');
         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const year = dateObj.getFullYear();
     
-        return `${day}-${month}-${year}`;
+        return `${day}-${month}`;
     }
     
     function renderOrdersTable(orders) {
@@ -193,19 +192,21 @@ document.addEventListener("DOMContentLoaded", function () {
         orders.forEach(order => {
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>${order.timestamp || "-"}</td>
-                <td>${order.id_input || "-"}</td>
+                <td>${formatTimestampFromString(order.timestamp) || "-"}</td>
                 <td>${order.id_pesanan || "-"}</td>
                 <td>${order.platform || "-"}</td>
                 <td>${adminList[order.id_admin] || "-"}</td>
                 <td>${order.qty || "-"}</td>
                 <td>${formatTanggal(order.deadline)}</td>
                 <td>${desainerList[order.id_desainer] || "-"}</td>
+                <td>${formatTimestamp(order.timestamp_designer) || "-"}</td>
                 <td>
                     ${order.layout_link ? `<a href="${order.layout_link}" target="_blank">Lihat Layout</a>` : "-"}
                 </td>
                 <td>${penjahitList[order.id_penjahit] || "-"}</td>
+                <td>${formatTimestamp(order.timestamp_penjahit) || "-"}</td>
                 <td>${qcList[order.id_qc] || "-"}</td>
+                <td>${formatTimestamp(order.timestamp_qc) || "-"}</td>
                 <td>${order.status_print || "-"}</td>
                 <td>${order.status_produksi || "-"}</td>
                 <td>
@@ -222,23 +223,52 @@ document.addEventListener("DOMContentLoaded", function () {
         addUpdateEventListeners();
         addInputChangeEventListeners();
         addDescriptionEventListeners();
-        // Add this call inside your initApp() function or at the end of your DOMContentLoaded
-    // setupAutoRefresh();
     }
 
-        // Add this to your existing code in tablePesanan.js
-    function setupAutoRefresh() {
-        // Refresh data every 30 seconds
-        const refreshInterval = 30000;
-        
-        console.log("Auto refresh enabled - refreshing every " + (refreshInterval/1000) + " seconds");
-        
-        // Set up the interval timer
-        setInterval(() => {
-            console.log("Auto refreshing data...");
-            fetchOrders();
-        }, refreshInterval);
+    function formatTimestamp(timestamp) {
+        // Jika timestamp kosong, return string kosong
+        if (!timestamp) return "";
+    
+        // Ubah timestamp menjadi objek Date
+        let date = new Date(timestamp);
+    
+        // Format jam dan menit
+        let hours = String(date.getHours()).padStart(2, "0");
+        let minutes = String(date.getMinutes()).padStart(2, "0");
+    
+        // Format tanggal dan bulan
+        let day = String(date.getDate()).padStart(2, "0");
+        let month = String(date.getMonth() + 1).padStart(2, "0"); // Ingat! Bulan di JS dimulai dari 0
+    
+        return `${hours}:${minutes} / ${day}-${month}`;
     }
+    
+    // Contoh data dari database
+    const timestamps = [
+        "2025-03-03T16:28:00Z",
+        "2025-01-01T07:00:00Z",
+        null, // Field kosong di database
+        "2025-03-03T16:23:00Z",
+        "2025-03-03T16:24:00Z"
+    ];
+
+    
+
+    function formatTimestampFromString(timestampString) {
+        // Konversi string timestamp ke objek Date
+        const date = new Date(timestampString);
+        if (isNaN(date.getTime())) return "Invalid Date"; // Validasi timestamp
+        
+        // Ambil jam dan menit
+        let hours = date.getHours().toString().padStart(2, '0'); // Format 2 digit
+        let minutes = date.getMinutes().toString().padStart(2, '0');
+    
+        // Ambil tanggal dan bulan
+        let day = date.getDate().toString().padStart(2, '0');
+        let month = (date.getMonth() + 1).toString().padStart(2, '0'); // getMonth() mulai dari 0
+    
+        return `${hours}:${minutes} / ${day}-${month}`;
+    }  
     
     function addInputChangeEventListeners() {
         document.querySelectorAll(".layout-link-input").forEach(input => {
@@ -714,7 +744,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const orderedKeys = [
             "id_input", "id_pesanan", "timestamp", "id_admin", "deadline", "qty",
             "platform", "id_desainer", "status_print", "layout_link", "status_produksi",
-            "id_penjahit", "id_qc"
+            "id_penjahit", "id_qc", "timestamp_designer", "timestamp_penjahit", "timestamp_qc"
         ];        
         
         orderedKeys.forEach(key => {

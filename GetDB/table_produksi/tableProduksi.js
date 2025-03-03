@@ -27,48 +27,11 @@ document.addEventListener("DOMContentLoaded", function () {
             setupFilterAndSearch();
             // Setup PDF and Excel buttons
             setupDownloadButtons();
-            setupWebSocketConnection();
         } catch (error) {
             console.error("Error initializing app:", error);
             showResultPopup("Gagal memuat aplikasi. Silakan refresh halaman.", true);
         }
     }
-
-
-     // Add WebSocket functionality to listen for real-time updates
-     function setupWebSocketConnection() {
-        // Check if Socket.IO is loaded
-        if (typeof io === 'undefined') {
-            loadScript("https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js")
-                .then(() => {
-                    connectWebSocket();
-                })
-                .catch(error => {
-                    console.error("Failed to load Socket.IO:", error);
-                });
-        } else {
-            connectWebSocket();
-        }
-    }
-
-        function connectWebSocket() {
-            const socket = io('http://127.0.0.1:5000', {
-                transports: ['websocket', 'polling'],
-                withCredentials: true
-            });
-            socket.on('update_event', function(data) {
-                console.log('🔄 Received update:', data);
-                fetchOrders();  // Ambil data terbaru saat ada perubahan
-            });            
-            socket.on('connect', function() {
-                console.log('✅ WebSocket Connected!');
-            });
-            
-            socket.on('disconnect', function() {
-                console.warn('⚠️ WebSocket Disconnected');
-            });
-            
-        }
 
     document.getElementById("inputForm").addEventListener("submit", async function (event) {
         event.preventDefault(); // Hindari reload form
@@ -281,20 +244,6 @@ document.addEventListener("DOMContentLoaded", function () {
         // Add this call inside your initApp() function or at the end of your DOMContentLoaded
     // setupAutoRefresh();
     }
-
-        // Add this to your existing code in tablePesanan.js
-    function setupAutoRefresh() {
-        // Refresh data every 30 seconds
-        const refreshInterval = 1000;
-        
-        console.log("Auto refresh enabled - refreshing every " + (refreshInterval/1000) + " seconds");
-        
-        // Set up the interval timer
-        setInterval(() => {
-            console.log("Auto refreshing data...");
-            fetchOrders();
-        }, refreshInterval);
-    }
     
     function addInputChangeEventListeners() {
         // ✅ Event listener untuk dropdown status produksi (diperbarui saat diubah)
@@ -435,19 +384,6 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
             console.error("Error showing modal:", error);
             modalBody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">Gagal memuat data pesanan: ${error.message}</td></tr>`;
-        }
-    }
-    
-    function getBadgeClass(status) {
-        switch(status) {
-            case '-': return 'bg-primary text-white';
-            case 'SEDANG DI-PRESS': return 'bg-indigo text-white';
-            case 'SEDANG DI-JAHIT': return 'bg-success text-white';
-            case 'TAS SUDAH DI-JAHIT': return 'bg-teal text-white';
-            case 'REJECT PRINT ULANG': return 'bg-danger text-white';
-            case 'TAS BLM ADA': return 'bg-danger text-white';
-            case 'DONE': return 'bg-success text-white';
-            default: return 'bg-secondary text-white';
         }
     }
     
@@ -635,10 +571,10 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
         
-        // // Convert to integer if it's penjahit or qc
-        // if (["id_penjahit", "id_qc"].includes(apiParam)) {
-        //     value = value ? parseInt(value, 10) : null;
-        // }
+        // Convert to integer if it's id_penjahit or id_qc
+        if (["id_penjahit", "id_qc"].includes(apiParam)) {
+            value = value ? parseInt(value, 10) : null;
+        }
     
         // Create request body according to API format
         const requestBody = { "id_input": id_input };
@@ -681,6 +617,7 @@ document.addEventListener("DOMContentLoaded", function () {
             confirmUpdateBtn.innerHTML = 'Ya, Update';
         });
     }
+    
     
     function setupDownloadButtons() {
         // PDF Download button
