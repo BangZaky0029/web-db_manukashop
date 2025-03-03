@@ -230,15 +230,15 @@ document.addEventListener("DOMContentLoaded", function () {
         orders.forEach(order => {
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>${order.Timestamp || "-"}</td>
+                <td>${order.timestamp || "-"}</td>
                 <td>${order.id_input || "-"}</td>
-                <td>${order.Platform || "-"}</td>
+                <td>${order.platform || "-"}</td>
                 <td>${order.qty || "-"}</td>
                 <td>
                 <select class="penjahit-dropdown" data-id="${order.id_input}" data-column="Penjahit">
                 <option value="">Pilih Penjahit</option>
                 ${Object.entries(penjahitList).map(([id, nama]) =>
-                    `<option value="${id}" ${order.Penjahit == id ? 'selected' : ''}>${nama}</option>`
+                    `<option value="${id}" ${order.id_penjahit == id ? 'selected' : ''}>${nama}</option>`
                 ).join('')}
                 </select>
                 </td>
@@ -247,21 +247,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 <select class="qc-dropdown" data-id="${order.id_input}" data-column="qc">
                 <option value="">Pilih QC</option>
                 ${Object.entries(qcList).map(([id, nama]) =>
-                    `<option value="${id}" ${order.qc == id ? 'selected' : ''}>${nama}</option>`
+                    `<option value="${id}" ${order.id_qc == id ? 'selected' : ''}>${nama}</option>`
                 ).join('')}
                 </select>
                 </td>
-                <td>${formatTanggal(order.Deadline)}</td>
+                <td>${formatTanggal(order.deadline)}</td>
                 <td>${order.status_print || "-"}</td>
                 <td>
                     <select class="status-produksi" data-id="${order.id_input}" data-column="Status_Produksi">
-                        <option value="-" ${order.Status_Produksi === '-' ? 'selected' : ''}>-</option>
-                        <option value="SEDANG DI-PRESS" ${order.Status_Produksi === 'SEDANG DI-PRESS' ? 'selected' : ''}>SEDANG DI-PRESS</option>
-                        <option value="SEDANG DI-JAHIT" ${order.Status_Produksi === 'SEDANG DI-JAHIT' ? 'selected' : ''}>SEDANG DI-JAHIT</option>
-                        <option value="TAS SUDAH DI-JAHIT" ${order.Status_Produksi === 'TAS SUDAH DI-JAHIT' ? 'selected' : ''}>TAS SUDAH DI-JAHIT</option>
-                        <option value="REJECT PRINT ULANG" ${order.Status_Produksi === 'REJECT PRINT ULANG' ? 'selected' : ''}>REJECTPRINT ULANG</option>
-                        <option value="TAS BLM ADA" ${order.Status_Produksi === 'TAS BLM ADA' ? 'selected' : ''}>TAS BLM ADA</option>
-                        <option value="DONE" ${order.Status_Produksi === 'DONE' ? 'selected' : ''}>DONE</option>
+                        <option value="-" ${order.status_produksi === '-' ? 'selected' : ''}>-</option>
+                        <option value="SEDANG DI-PRESS" ${order.status_produksi === 'SEDANG DI PRESS' ? 'selected' : ''}>SEDANG DI PRESS</option>
+                        <option value="SEDANG DI-JAHIT" ${order.status_produksi === 'SEDANG DI JAHIT' ? 'selected' : ''}>SEDANG DI JAHIT</option>
+                        <option value="TAS SUDAH DI-JAHIT" ${order.status_produksi === 'TAS SUDAH DI JAHIT' ? 'selected' : ''}>TAS SUDAH DI JAHIT</option>
+                        <option value="REJECT PRINT ULANG" ${order.status_produksi === 'REJECT PRINT ULANG' ? 'selected' : ''}>REJECTPRINT ULANG</option>
+                        <option value="TAS BLM ADA" ${order.status_produksi === 'TAS BLM ADA' ? 'selected' : ''}>TAS BLM ADA</option>
+                        <option value="DONE" ${order.status_produksi === 'DONE' ? 'selected' : ''}>DONE</option>
                     </select>
                 </td>
                 <td>
@@ -329,19 +329,19 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = await response.json();
     
             if (data.table_admin) {
-                data.table_admin.forEach(a => adminList[a.ID] = a.Nama);
+                data.table_admin.forEach(a => adminList[a.ID] = a.nama);
             }
             if (data.table_desainer) {
-                data.table_desainer.forEach(d => desainerList[d.ID] = d.Nama);
+                data.table_desainer.forEach(d => desainerList[d.ID] = d.nama);
             }
             if (data.table_kurir) {
-                data.table_kurir.forEach(k => kurirList[k.ID] = k.Nama);
+                data.table_kurir.forEach(k => kurirList[k.ID] = k.nama);
             }
             if (data.table_penjahit) {
-                data.table_penjahit.forEach(p => penjahitList[p.ID] = p.Nama);
+                data.table_penjahit.forEach(p => penjahitList[p.ID] = p.nama);
             }
             if (data.table_qc) {
-                data.table_qc.forEach(q => qcList[q.ID] = q.Nama);
+                data.table_qc.forEach(q => qcList[q.ID] = q.nama);
             }
     
             console.log("Reference data loaded successfully");
@@ -572,19 +572,33 @@ document.addEventListener("DOMContentLoaded", function () {
             select.addEventListener("change", function () {
                 const id_input = this.dataset.id;
                 const column = this.dataset.column;
-                const value = this.value;
-
-                console.log("📤 Sending Update Request:", { id_input, column, value }); // Debugging
+                let value = this.value;
+        
+                // 🔹 Validasi agar column sesuai API
+                const allowedColumns = ["id_penjahit", "id_qc", "status_produksi"];
+                if (!allowedColumns.includes(column)) {
+                    console.error("❌ Kolom tidak valid untuk update:", column);
+                    showResultPopup(`Kolom tidak valid: ${column}`, true);
+                    return;
+                }
+        
+                // 🔹 Konversi nilai ke INT jika yang diubah adalah Penjahit atau qc
+                if (["id_penjahit", "id_qc"].includes(column)) {
+                    value = parseInt(value, 10);
+                }
+        
+                console.log("📤 Sending Update Request:", { id_input, column, value });
                 updateOrderWithConfirmation(id_input, column, value);
             });
         });
+        
         
         // Confirm update button
         document.getElementById("confirmUpdateBtn").addEventListener("click", function() {
             const popup = document.getElementById("confirmUpdatePopup");
             const id_input = popup.dataset.id;
             const column = popup.dataset.column;
-            const value = popup.dataset.value;
+            const value = popup.dataset.value;r
             
             updateOrder(id_input, column, value);
             popup.classList.remove("active");
@@ -611,17 +625,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function updateOrder(id_input, column, value) {
-        // Pastikan hanya menggunakan endpoint sync-prod-to-pesanan
         const endpoint = "http://127.0.0.1:5000/api/sync-prod-to-pesanan";
         console.log("📤 Sending Update Request:", { id_input, column, value });
+    
         if (!id_input || !column) {
             console.error("❌ Gagal mengirim update: id_input atau column tidak valid");
             showResultPopup("ID Input atau Column tidak valid!", true);
             return;
         }
-        
+    
         // Validasi kolom yang diperbolehkan
-        const allowedColumns = ["Penjahit", "qc", "Status_Produksi"];
+        const allowedColumns = ["id_penjahit", "id_qc", "status_produksi"];
     
         if (!allowedColumns.includes(column)) {
             console.error("❌ Kolom tidak valid untuk update.");
@@ -633,24 +647,28 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmUpdateBtn.disabled = true;
         confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     
-        // Kirim request PUT ke endpoint yang benar
+        // Buat JSON body sesuai dengan format backend
+        const requestBody = { id_input };
+        requestBody[column] = value; // Assign nilai berdasarkan kolom yang diupdate
+    
+        console.log("📤 JSON yang dikirim:", JSON.stringify(requestBody));
+    
         fetch(endpoint, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id_input, column, value })
+            body: JSON.stringify(requestBody),
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+            console.log("📥 Response status:", response.status);
             return response.json();
         })
         .then(data => {
+            console.log("📥 Response JSON:", data);
             if (data.status === "success") {
                 showResultPopup(`✅ Update berhasil: ${column} -> ${value}`);
     
                 // Update data di UI
-                const orderIndex = allOrders.findIndex(order => order.id_input == id_input);
+                const orderIndex = allOrders.findIndex(order => order.id_input === id_input);
                 if (orderIndex !== -1) {
                     allOrders[orderIndex][column] = value;
                     renderOrdersTable(paginateOrders(allOrders));
@@ -670,6 +688,7 @@ document.addEventListener("DOMContentLoaded", function () {
             confirmUpdateBtn.innerHTML = 'Ya, Update';
         });
     }
+    
     
     
     
@@ -771,8 +790,8 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Add data rows in a specific order
         const orderedKeys = [
-            "id_input", "timestamp", "platform", "status_print", "deadline", "qty", "Penjahit", "qc", "Status_Produksi"
-        ];
+            "id_input", "timestamp", "platform", "status_print", "deadline", "qty", "id_penjahit", "id_qc", "status_produksi"
+        ];        
         
         orderedKeys.forEach(key => {
             if (order.hasOwnProperty(key)) {

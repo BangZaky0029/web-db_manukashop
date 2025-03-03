@@ -197,17 +197,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${order.id_input || "-"}</td>
                 <td>${order.id_pesanan || "-"}</td>
                 <td>${order.platform || "-"}</td>
-                <td>${adminList[order.admin] || "-"}</td>
+                <td>${adminList[order.id_admin] || "-"}</td>
                 <td>${order.qty || "-"}</td>
                 <td>${formatTanggal(order.deadline)}</td>
-                <td>${desainerList[order.desainer] || "-"}</td>
+                <td>${desainerList[order.id_desainer] || "-"}</td>
                 <td>
                     ${order.layout_link ? `<a href="${order.layout_link}" target="_blank">Lihat Layout</a>` : "-"}
                 </td>
-                <td>${penjahitList[order.penjahit] || "-"}</td>
-                <td>${qcList[order.qc] || "-"}</td>
-                <td>${order.print_status || "-"}</td>
-                <td>${order.Status_Produksi || "-"}</td>
+                <td>${penjahitList[order.id_penjahit] || "-"}</td>
+                <td>${qcList[order.id_qc] || "-"}</td>
+                <td>${order.status_print || "-"}</td>
+                <td>${order.status_produksi || "-"}</td>
                 <td>
                 <div style="display: flex; gap: 10px; justify-content: center;">
                     <button class="delete-icon" data-id="${order.id_input}"><i class="fas fa-trash-alt"></i></button>
@@ -281,19 +281,19 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = await response.json();
     
             if (data.table_admin) {
-                data.table_admin.forEach(a => adminList[a.ID] = a.Nama);
+                data.table_admin.forEach(a => adminList[a.ID] = a.nama);
             }
             if (data.table_desainer) {
-                data.table_desainer.forEach(d => desainerList[d.ID] = d.Nama);
+                data.table_desainer.forEach(d => desainerList[d.ID] = d.nama);
             }
             if (data.table_kurir) {
-                data.table_kurir.forEach(k => kurirList[k.ID] = k.Nama);
+                data.table_kurir.forEach(k => kurirList[k.ID] = k.nama);
             }
             if (data.table_penjahit) {
-                data.table_penjahit.forEach(p => penjahitList[p.ID] = p.Nama);
+                data.table_penjahit.forEach(p => penjahitList[p.ID] = p.nama);
             }
             if (data.table_qc) {
-                data.table_qc.forEach(q => qcList[q.ID] = q.Nama);
+                data.table_qc.forEach(q => qcList[q.ID] = q.nama);
             }
     
             console.log("Reference data loaded successfully");
@@ -364,20 +364,20 @@ document.addEventListener("DOMContentLoaded", function () {
             
             modalBody.innerHTML = `
                 <tr><th>ID Pesanan</th><td>${order.id_pesanan || "-"}</td></tr>
-                <tr><th>Admin</th><td>${adminList[order.admin] || "-"}</td></tr>
+                <tr><th>Admin</th><td>${adminList[order.id_admin] || "-"}</td></tr>
                 <tr><th>Timestamp</th><td>${order.timestamp || "-"}</td></tr>
                 <tr><th>Deadline</th><td>${formatTanggal(order.deadline) || "-"}</td></tr>
                 <tr><th>Quantity</th><td>${order.qty || "-"}</td></tr>
                 <tr><th>Platform</th><td>${order.platform || "-"}</td></tr>
-                <tr><th>Desainer</th><td>${desainerList[order.desainer] || "-"}</td></tr>
-                <tr><th>Status Print</th><td><span class="badge ${getBadgeClass(order.print_status)}">${order.print_status || "-"}</span></td></tr>
+                <tr><th>Desainer</th><td>${desainerList[order.id_desainer] || "-"}</td></tr>
+                <tr><th>Status Print</th><td><span class="badge ${getBadgeClass(order.status_print)}">${order.status_print || "-"}</span></td></tr>
                 <tr><th>Layout Link</th><td>${
                     order.layout_link 
                     ? `<a href="${order.layout_link}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-link"></i> Buka Link</a>`
                     : "-"
                 }</td></tr>
-                <tr><th>Penjahit</th><td>${penjahitList[order.penjahit] || "-"}</td></tr>
-                <tr><th>QC</th><td>${qcList[order.qc] || "-"}</td></tr>
+                <tr><th>Penjahit</th><td>${penjahitList[order.id_penjahit] || "-"}</td></tr>
+                <tr><th>QC</th><td>${qcList[order.id_qc] || "-"}</td></tr>
                 <tr><th>Link Foto</th><td>${
                     linkFoto && linkFoto !== "-" 
                     ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>` 
@@ -687,13 +687,13 @@ document.addEventListener("DOMContentLoaded", function () {
             
             if (key === "deadline") {
                 valueFormatted = formatTanggal(value);
-            } else if (key === "desainer" && desainerList[value]) {
+            } else if (key === "id_desainer" && desainerList[value]) {
                 valueFormatted = desainerList[value];
-            } else if (key === "penjahit" && penjahitList[value]) {
+            } else if (key === "id_penjahit" && penjahitList[value]) {
                 valueFormatted = penjahitList[value];
-            } else if (key === "qc" && qcList[value]) {
+            } else if (key === "id_qc" && qcList[value]) {
                 valueFormatted = qcList[value];
-            } else if (key === "admin" && adminList[value]) {
+            } else if (key === "id_admin" && adminList[value]) {
                 valueFormatted = adminList[value];
             }
             
@@ -712,10 +712,10 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Add data rows in a specific order
         const orderedKeys = [
-            "id_input",  "id_pesanan", "timestamp", "admin", "deadline", "qty", 
-            "platform", "desainer", "print_status", "layout_link", "Status_Produksi", 
-            "penjahit", "qc"
-        ];
+            "id_input", "id_pesanan", "timestamp", "id_admin", "deadline", "qty",
+            "platform", "id_desainer", "status_print", "layout_link", "status_produksi",
+            "id_penjahit", "id_qc"
+        ];        
         
         orderedKeys.forEach(key => {
             if (order.hasOwnProperty(key)) {
@@ -781,17 +781,17 @@ document.addEventListener("DOMContentLoaded", function () {
         if (processedOrder.deadline) {
             processedOrder.deadline = formatTanggal(processedOrder.deadline);
         }
-        if (processedOrder.desainer && desainerList[processedOrder.desainer]) {
-            processedOrder.desainer = desainerList[processedOrder.desainer];
+        if (processedOrder.id_desainer && desainerList[processedOrder.id_desainer]) {
+            processedOrder.id_desainer = desainerList[processedOrder.id_desainer];
         }
-        if (processedOrder.penjahit && penjahitList[processedOrder.penjahit]) {
-            processedOrder.penjahit = penjahitList[processedOrder.penjahit];
+        if (processedOrder.id_penjahit && penjahitList[processedOrder.id_penjahit]) {
+            processedOrder.id_penjahit = penjahitList[processedOrder.id_penjahit];
         }
         if (processedOrder.qc && qcList[processedOrder.qc]) {
             processedOrder.qc = qcList[processedOrder.qc];
         }
-        if (processedOrder.admin && adminList[processedOrder.admin]) {
-            processedOrder.admin = adminList[processedOrder.admin];
+        if (processedOrder.id_admin && adminList[processedOrder.id_admin]) {
+            processedOrder.id_admin = adminList[processedOrder.id_admin];
         }
         
         const wb = XLSX.utils.book_new();

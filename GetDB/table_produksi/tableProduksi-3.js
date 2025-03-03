@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
         event.preventDefault(); // Hindari reload form
     
         const formData = new FormData(this);
-        const response = await fetch("http://127.0.0.1:5000/api/get_table_design", {
+        const response = await fetch("http://127.0.0.1:5000/api/get_table_prod", {
             method: "POST",
             body: JSON.stringify(Object.fromEntries(formData)),
             headers: { "Content-Type": "application/json" },
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function fetchOrders() {
         try {
-            const response = await fetch("http://127.0.0.1:5000/api/get_table_design");
+            const response = await fetch("http://127.0.0.1:5000/api/get_table_prod");
             
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -75,6 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
             showResultPopup("Terjadi kesalahan saat mengambil data.", true);
         }
     }
+
 
     function paginateOrders(orders) {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -199,25 +200,33 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${order.platform || "-"}</td>
                 <td>${order.qty || "-"}</td>
                 <td>
-                    <select class="desainer-dropdown" data-id="${order.id_input}" data-column="desainer">
-                        <option value="">Pilih Desainer</option>
-                        ${Object.entries(desainerList).map(([id, nama]) =>
-                            `<option value="${id}" ${order.id_designer == id ? 'selected' : ''}>${nama}</option>`
-                        ).join('')}
-                    </select>
+                <select class="penjahit-dropdown" data-id="${order.id_input}" data-column="Penjahit">
+                <option value="">Pilih Penjahit</option>
+                ${Object.entries(penjahitList).map(([id, nama]) =>
+                    `<option value="${id}" ${order.id_penjahit == id ? 'selected' : ''}>${nama}</option>`
+                ).join('')}
+                </select>
                 </td>
+                
                 <td>
-                    <input type="text" class="layout-link-input" data-id="${order.id_input}" data-column="layout_link"
-                           value="${order.layout_link || ''}" placeholder="Masukkan link" />
+                <select class="qc-dropdown" data-id="${order.id_input}" data-column="qc">
+                <option value="">Pilih QC</option>
+                ${Object.entries(qcList).map(([id, nama]) =>
+                    `<option value="${id}" ${order.id_qc == id ? 'selected' : ''}>${nama}</option>`
+                ).join('')}
+                </select>
                 </td>
                 <td>${formatTanggal(order.deadline)}</td>
+                <td>${order.status_print || "-"}</td>
                 <td>
-                    <select class="print-status-dropdown" data-id="${order.id_input}" data-column="print_status">
-                        <option value="-" ${order.status_print === '-' ? 'selected' : ''}>-</option>
-                        <option value="EDITING" ${order.status_print === 'EDITING' ? 'selected' : ''}>EDITING</option>
-                        <option value="PRINT VENDOR" ${order.status_print === 'PRINT VENDOR' ? 'selected' : ''}>PRINT VENDOR</option>
-                        <option value="PROSES PRINT" ${order.status_print === 'PROSES PRINT' ? 'selected' : ''}>PROSES PRINT</option>
-                        <option value="SELESAI PRINT" ${order.status_print === 'SELESAI PRINT' ? 'selected' : ''}>SELESAI PRINT</option>
+                    <select class="status-produksi" data-id="${order.id_input}" data-column="Status_Produksi">
+                        <option value="-" ${order.status_produksi === '-' ? 'selected' : ''}>-</option>
+                        <option value="SEDANG DI-PRESS" ${order.status_produksi === 'SEDANG DI-PRESS' ? 'selected' : ''}>SEDANG DI-PRESS</option>
+                        <option value="SEDANG DI-JAHIT" ${order.status_produksi === 'SEDANG DI-JAHIT' ? 'selected' : ''}>SEDANG DI-JAHIT</option>
+                        <option value="TAS SUDAH DI-JAHIT" ${order.status_produksi === 'TAS SUDAH DI-JAHIT' ? 'selected' : ''}>TAS SUDAH DI-JAHIT</option>
+                        <option value="REJECT PRINT ULANG" ${order.status_produksi === 'REJECT PRINT ULANG' ? 'selected' : ''}>REJECTPRINT ULANG</option>
+                        <option value="TAS BLM ADA" ${order.status_produksi === 'TAS BLM ADA' ? 'selected' : ''}>TAS BLM ADA</option>
+                        <option value="DONE" ${order.status_produksi === 'DONE' ? 'selected' : ''}>DONE</option>
                     </select>
                 </td>
                 <td>
@@ -233,22 +242,12 @@ document.addEventListener("DOMContentLoaded", function () {
         addUpdateEventListeners();
         addInputChangeEventListeners();
         addDescriptionEventListeners();
+        // Add this call inside your initApp() function or at the end of your DOMContentLoaded
+    // setupAutoRefresh();
     }
-    
     function addInputChangeEventListeners() {
-        // ✅ Event listener untuk input layout link (diperbarui saat blur)
-        document.querySelectorAll(".layout-link-input").forEach(input => {
-            input.addEventListener("blur", function() {
-                const id_pesanan = this.dataset.id;
-                const column = this.dataset.column;
-                const value = this.value;
-                
-                updateOrderWithConfirmation(id_pesanan, column, value);
-            });
-        });
-    
         // ✅ Event listener untuk dropdown status produksi (diperbarui saat diubah)
-        document.querySelectorAll(".status-print").forEach(select => {
+        document.querySelectorAll(".status-produksi").forEach(select => {
             select.addEventListener("change", function () {
                 const id_input = this.dataset.id;
                 const column = this.dataset.column;
@@ -260,10 +259,10 @@ document.addEventListener("DOMContentLoaded", function () {
             updateSelectColor(select); // ✅ Pindahkan ini agar dijalankan setelah event listener ditambahkan
         });
     
-        // ✅ Fungsi untuk mengubah warna berdasarkan status print
+        // ✅ Fungsi untuk mengubah warna berdasarkan status produksi
         function updateSelectColor(select) {
             let selectedValue = select.value.replace(/ /g, "-"); // Ganti spasi dengan "-"
-            select.className = `status-print option-${selectedValue}`;
+            select.className = `status-produksi option-${selectedValue}`;
         }
     }
     
@@ -491,84 +490,117 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateOrderWithConfirmation(id_input, column, value) {
         const confirmPopup = document.getElementById("confirmUpdatePopup");
         const confirmMessage = document.getElementById("confirmUpdateMessage");
-        
-        // Get the display name for the column based on selected value
+    
+        // Dapatkan nama tampilan untuk kolom berdasarkan nilai yang dipilih
         let displayValue = value;
-        if (column === "id_designer" && desainerList[value]) {
+        
+        if (column === "id_penjahit" && desainerList[value]) {
             displayValue = desainerList[value];
         }
-        
-        // Column display name for user interface
+    
+        // Menentukan nama kolom yang akan ditampilkan di UI
         let columnDisplay = column;
-        switch(column) {
-            case "id_designer": columnDisplay = "Desainer"; break;
-            case "status_print": columnDisplay = "Status Print"; break;
-            case "layout_link": columnDisplay = "Layout Link"; break;
+        switch (column) {
+            case "id_penjahit":
+                columnDisplay = "Penjahit";
+                break;
+            case "id_qc":
+                columnDisplay = "QC";
+                break;
+            case "status_produksi":
+                columnDisplay = "Status Produksi";
+                break;
+            case "status_print":
+                columnDisplay = "Status Print";
+                break;
+            default:
+                columnDisplay = column; // Untuk kolom lain yang tidak spesifik
+                break;
         }
-        
+    
+        // Menampilkan pesan konfirmasi di popup
         confirmMessage.innerText = `Yakin ingin update ${columnDisplay} menjadi "${displayValue}" untuk ID Pesanan ${id_input}?`;
+    
+        // Menampilkan popup konfirmasi
         confirmPopup.classList.add("active");
-        
-        // Store the update details for use in event handlers
+    
+        // Menyimpan informasi update pada dataset popup untuk digunakan pada event handler
         confirmPopup.dataset.id = id_input;
         confirmPopup.dataset.column = column;
         confirmPopup.dataset.value = value;
     }
     
+    
     function addUpdateEventListeners() {
-        // For all dropdowns with data-column attribute (print-status and desainer)
+        // For all dropdowns with data-column attribute
         document.querySelectorAll("select[data-column]").forEach(select => {
             select.addEventListener("change", function () {
                 const id_input = this.dataset.id;
-                let column = this.dataset.column;
-                const value = this.value;
-                
-                // Map the column names to match the API expectations
-                if (column === "print_status") {
-                    column = "status_print";
-                } else if (column === "desainer") {
-                    column = "id_designer";
+                const column = this.dataset.column;
+                let value = this.value;
+    
+                // 🔹 Validasi agar kolom sesuai API
+                const allowedColumns = ["id_penjahit", "id_qc", "status_produksi"];
+                if (!allowedColumns.includes(column)) {
+                    console.error("❌ Kolom tidak valid untuk update:", column);
+                    showResultPopup(`Kolom tidak valid: ${column}`, true);
+                    return;
                 }
-                
+    
+                // 🔹 Konversi nilai ke INT jika yang diubah adalah Penjahit atau qc
+                if (["id_penjahit", "id_qc"].includes(column)) {
+                    value = parseInt(value, 10);
+                }
+    
+                console.log("📤 Sending Update Request:", { id_input, column, value });
                 updateOrderWithConfirmation(id_input, column, value);
             });
         });
-        
+    
         // Confirm update button
         document.getElementById("confirmUpdateBtn").addEventListener("click", function() {
             const popup = document.getElementById("confirmUpdatePopup");
             const id_input = popup.dataset.id;
             const column = popup.dataset.column;
             const value = popup.dataset.value;
-            
+    
+            // Validasi kolom sebelum update
+            if (!allowedColumns.includes(column)) {
+                console.error("❌ Kolom tidak valid untuk update:", column);
+                showResultPopup(`Kolom tidak valid: ${column}`, true);
+                return;
+            }
+    
             updateOrder(id_input, column, value);
             popup.classList.remove("active");
         });
-        
+    
         // Cancel update button
         document.getElementById("cancelUpdateBtn").addEventListener("click", function() {
             const popup = document.getElementById("confirmUpdatePopup");
             popup.classList.remove("active");
-            
-            // Reset the dropdown/input to its original value
+    
+            // Reset dropdown/input ke nilai awal
             const selector = `[data-id="${popup.dataset.id}"][data-column="${popup.dataset.column}"]`;
             const element = document.querySelector(selector);
-            
+    
             if (element) {
                 const originalOrder = allOrders.find(order => order.id_input == popup.dataset.id);
                 if (originalOrder && element.tagName === "SELECT") {
-                    // Map back from API field names to UI field names
+                    // Map kembali dari field API ke field UI
                     let fieldName = popup.dataset.column;
-                    if (fieldName === "status_print") {
-                        fieldName = "print_status";
-                    } else if (fieldName === "id_designer") {
-                        fieldName = "desainer";
+                    if (fieldName === "status_produksi") {
+                        fieldName = "status_produksi";
+                    } else if (fieldName === "id_penjahit") {
+                        fieldName = "id_penjahit";
+                    } else if (fieldName === "id_qc") {
+                        fieldName = "id_qc";
                     }
                     element.value = originalOrder[fieldName] || "";
                 } else if (originalOrder && element.tagName === "INPUT") {
                     let fieldName = popup.dataset.column;
                     if (fieldName === "layout_link") {
-                        fieldName = "layout_link"; // Note capital L in "Layout_link"
+                        fieldName = "layout_link"; // Catatan kapital 'L' di "Layout_link"
                     }
                     element.value = originalOrder[fieldName] || "";
                 }
@@ -576,49 +608,92 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     
-    function updateOrder(id_input, column, value) {
-        const endpointPesanan = "http://127.0.0.1:5000/api/update-print-status-layout";
-        const endpointProd = "http://127.0.0.1:5000/api/update-design";
+    
+    function updateOrder(id_input, id_penjahit, id_qc, status_produksi) {
+        const endpoint = "http://127.0.0.1:5000/api/sync-prod-to-pesanan";
+        console.log("📤 Sending Update Request:", { id_input, id_penjahit, id_qc, status_produksi });
+
+        if (!id_input) {
+            console.error("❌ Gagal mengirim update: id_input tidak valid");
+            showResultPopup("ID Input tidak valid!", true);
+            return;
+        }
+
+        const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
+        confirmUpdateBtn.disabled = true;
+        confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+        // Data JSON yang dikirim sesuai dengan API
+        const requestBody = { id_input };
+        if (id_penjahit !== undefined) requestBody.id_penjahit = id_penjahit;
+        if (id_qc !== undefined) requestBody.id_qc = id_qc;
+        if (status_produksi !== undefined) requestBody.status_produksi = status_produksi;
+
+        fetch(endpoint, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === "success") {
+                showResultPopup(`✅ Update berhasil untuk ID: ${id_input}`);
+
+                // Update data di UI
+                const orderIndex = allOrders.findIndex(order => order.id_input == id_input);
+                if (orderIndex !== -1) {
+                    if (id_penjahit !== undefined) allOrders[orderIndex].id_penjahit = id_penjahit;
+                    if (id_qc !== undefined) allOrders[orderIndex].id_qc = id_qc;
+                    if (status_produksi !== undefined) allOrders[orderIndex].status_produksi = status_produksi;
+                    renderOrdersTable(paginateOrders(allOrders));
+                } else {
+                    fetchOrders();
+                }
+            } else {
+                showResultPopup(`⚠️ Update gagal: ${data.message}`, true);
+            }
+        })
+        .catch(error => {
+            console.error("❌ Error:", error);
+            showResultPopup(`Terjadi kesalahan saat update: ${error.message}`, true);
+        })
+        .finally(() => {
+            confirmUpdateBtn.disabled = false;
+            confirmUpdateBtn.innerHTML = 'Ya, Update';
+        });
+    }
+    
+        const endpointSync = "http://127.0.0.1:5000/api/sync-prod-to-pesanan";
         
         const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
         confirmUpdateBtn.disabled = true; 
         confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     
-        // Fungsi untuk update ke table_pesanan
-        fetch(endpointPesanan, {
+        // Data yang akan dikirim
+        const requestData = {
+            id_input: id_input
+        };
+        
+        // Mapping kolom yang diperbolehkan
+        if (column === "id_penjahit") requestData.id_penjahit = value;
+        if (column === "id_qc") requestData.id_qc = value;
+        if (column === "status_produksi") requestData.status_produksi = value;
+        
+        fetch(endpointSync, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id_input, column, value })
+            body: JSON.stringify(requestData)
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`Gagal update table_pesanan! Status: ${response.status}`);
+                throw new Error(`Gagal update! Status: ${response.status}`);
             } 
             return response.json();
-        })
-        .then(data => {
-            if (data.status === "success") {
-                console.log("Update table_pesanan berhasil:", data);
-                
-                // Jika yang diupdate adalah "status_print", update juga di table_prod
-                if (column === "status_print") {
-                    return fetch(endpointProd, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ id_input, column, value })
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Gagal update table_prod! Status: ${response.status}`);
-                        }
-                        return response.json();
-                    });
-                } else {
-                    return { status: "success", message: "Tidak perlu update table_prod" };
-                }
-            } else {
-                throw new Error(`Update table_pesanan gagal: ${data.message}`);
-            }
         })
         .then(data => {
             if (data.status === "success") {
@@ -633,18 +708,19 @@ document.addEventListener("DOMContentLoaded", function () {
                     fetchOrders();
                 }
             } else {
-                showResultPopup(`Update table_prod gagal: ${data.message}`, true);
+                throw new Error(`Update gagal: ${data.message}`);
             }
         })
         .catch(error => {
             console.error("Error:", error);
-            showResultPopup(`Terjadi kesalahan saat update: ${error.message}`, true);
+            showResultPopup(`Terjadi kesalahan: ${error.message}`, true);
         })
         .finally(() => {
             confirmUpdateBtn.disabled = false;
             confirmUpdateBtn.innerHTML = 'Ya, Update';
         });
-    }
+    },
+    
     
     
     function setupDownloadButtons() {
@@ -657,7 +733,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("downloadExcel").addEventListener("click", function() {
             handleDownloadExcel();
         });
-    }
+    },
 
         // Add WebSocket functionality to listen for real-time updates
     function setupWebSocketConnection() {
@@ -673,7 +749,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             connectWebSocket();
         }
-    }
+    },
 
         function connectWebSocket() {
             const socket = io('http://127.0.0.1:5000', {
@@ -690,7 +766,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.warn('⚠️ WebSocket Disconnected');
             });
             
-        }
+        },
 
     
     function handleDownloadPDF() {
@@ -722,7 +798,7 @@ document.addEventListener("DOMContentLoaded", function () {
             downloadBtn.disabled = false;
             downloadBtn.innerHTML = 'Download PDF';
         }
-    }
+    },
     
     function generatePDF(order) {
         const { jsPDF } = window.jspdf;
@@ -779,8 +855,8 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Add data rows in a specific order
         const orderedKeys = [
-            "id_input", "timestamp", "platform", "deadline", "qty", "id_designer", "status_print", "layout_link"
-        ];
+            "id_input", "timestamp", "platform", "status_print", "deadline", "qty", "id_penjahit", "id_qc", "status_produksi"
+        ];  
         
         orderedKeys.forEach(key => {
             if (order.hasOwnProperty(key)) {
@@ -806,7 +882,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
         doc.save(`Order_${order.id_pesanan}.pdf`);
         showResultPopup("PDF berhasil didownload!");
-    }
+    },
     
     function handleDownloadExcel() {
         if (!window.currentOrder) {
@@ -837,7 +913,7 @@ document.addEventListener("DOMContentLoaded", function () {
             downloadBtn.disabled = false;
             downloadBtn.innerHTML = 'Download Excel';
         }
-    }
+    },
     
     function generateExcel(order) {
         const processedOrder = {...order};
@@ -865,7 +941,7 @@ document.addEventListener("DOMContentLoaded", function () {
         XLSX.utils.book_append_sheet(wb, ws, "OrderDetails");
         XLSX.writeFile(wb, `Order_${order.id_pesanan}.xlsx`);
         showResultPopup("Excel berhasil didownload!");
-    }
+    },
     
     // Load external scripts dynamically
     function loadScript(src) {
@@ -919,9 +995,8 @@ document.addEventListener("DOMContentLoaded", function () {
             script.onerror = reject;
             document.body.appendChild(script);
         });
-    }
+    }),
     
     // Preload external libraries
     loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
     loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
-});

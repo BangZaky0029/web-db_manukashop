@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${order.TimeTemp}</td>
                 <td>${order.id_input}</td>
                 <td>${order.id_pesanan}</td>
-                <td>${adminList[order.ID] || order.ID}</td>
+                <td>${adminList[order.id_admin] || order.id_admin}</td>
                 <td class="platform-${platformClass}">${order.Platform}</td>
                 <td>${order.qty}</td>
                 <td>${order.nama_ket}</td>
