@@ -574,31 +574,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 const column = this.dataset.column;
                 let value = this.value;
         
-                // 🔹 Validasi agar column sesuai API
-                const allowedColumns = ["id_penjahit", "id_qc", "status_produksi"];
-                if (!allowedColumns.includes(column)) {
-                    console.error("❌ Kolom tidak valid untuk update:", column);
-                    showResultPopup(`Kolom tidak valid: ${column}`, true);
-                    return;
-                }
-        
-                // 🔹 Konversi nilai ke INT jika yang diubah adalah Penjahit atau qc
-                if (["id_penjahit", "id_qc"].includes(column)) {
-                    value = parseInt(value, 10);
-                }
-        
-                console.log("📤 Sending Update Request:", { id_input, column, value });
+                // Update with confirmation dialog
                 updateOrderWithConfirmation(id_input, column, value);
             });
         });
-        
         
         // Confirm update button
         document.getElementById("confirmUpdateBtn").addEventListener("click", function() {
             const popup = document.getElementById("confirmUpdatePopup");
             const id_input = popup.dataset.id;
             const column = popup.dataset.column;
-            const value = popup.dataset.value;r
+            const value = popup.dataset.value;  // Fixed the syntax error here
             
             updateOrder(id_input, column, value);
             popup.classList.remove("active");
@@ -626,20 +612,10 @@ document.addEventListener("DOMContentLoaded", function () {
     
     function updateOrder(id_input, column, value) {
         const endpoint = "http://127.0.0.1:5000/api/sync-prod-to-pesanan";
-        console.log("📤 Sending Update Request:", { id_input, column, value });
-    
+        
         if (!id_input || !column) {
             console.error("❌ Gagal mengirim update: id_input atau column tidak valid");
             showResultPopup("ID Input atau Column tidak valid!", true);
-            return;
-        }
-    
-        // Validasi kolom yang diperbolehkan
-        const allowedColumns = ["id_penjahit", "id_qc", "status_produksi"];
-    
-        if (!allowedColumns.includes(column)) {
-            console.error("❌ Kolom tidak valid untuk update.");
-            showResultPopup(`Kolom tidak valid: ${column}`, true);
             return;
         }
     
@@ -647,9 +623,32 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmUpdateBtn.disabled = true;
         confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     
-        // Buat JSON body sesuai dengan format backend
-        const requestBody = { id_input };
-        requestBody[column] = value; // Assign nilai berdasarkan kolom yang diupdate
+        // Map frontend column names to API parameter names
+        const columnMapping = {
+            "Penjahit": "id_penjahit",
+            "qc": "id_qc",
+            "Status_Produksi": "status_produksi"
+        };
+        
+        // Get the correct parameter name for the API
+        const apiParam = columnMapping[column];
+        
+        if (!apiParam) {
+            console.error("❌ Kolom tidak valid untuk update:", column);
+            showResultPopup(`Kolom tidak valid: ${column}`, true);
+            confirmUpdateBtn.disabled = false;
+            confirmUpdateBtn.innerHTML = 'Ya, Update';
+            return;
+        }
+        
+        // Convert to integer if it's penjahit or qc
+        if (["id_penjahit", "id_qc"].includes(apiParam)) {
+            value = value ? parseInt(value, 10) : null;
+        }
+    
+        // Create request body according to API format
+        const requestBody = { "id_input": id_input };
+        requestBody[apiParam] = value;
     
         console.log("📤 JSON yang dikirim:", JSON.stringify(requestBody));
     
@@ -688,9 +687,6 @@ document.addEventListener("DOMContentLoaded", function () {
             confirmUpdateBtn.innerHTML = 'Ya, Update';
         });
     }
-    
-    
-    
     
     function setupDownloadButtons() {
         // PDF Download button
