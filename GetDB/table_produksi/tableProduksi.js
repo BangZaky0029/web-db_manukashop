@@ -235,7 +235,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${order.platform || "-"}</td>
                 <td>${order.qty || "-"}</td>
                 <td>
-                <select class="penjahit-dropdown" data-id="${order.id_input}" data-column="Penjahit">
+                <select class="penjahit-dropdown" data-id="${order.id_input}" data-column="penjahit">
                 <option value="">Pilih Penjahit</option>
                 ${Object.entries(penjahitList).map(([id, nama]) =>
                     `<option value="${id}" ${order.id_penjahit == id ? 'selected' : ''}>${nama}</option>`
@@ -254,16 +254,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${formatTanggal(order.deadline)}</td>
                 <td>${order.status_print || "-"}</td>
                 <td>
-                    <select class="status-produksi" data-id="${order.id_input}" data-column="Status_Produksi">
-                        <option value="-" ${order.status_produksi === '-' ? 'selected' : ''}>-</option>
-                        <option value="SEDANG DI-PRESS" ${order.status_produksi === 'SEDANG DI PRESS' ? 'selected' : ''}>SEDANG DI PRESS</option>
-                        <option value="SEDANG DI-JAHIT" ${order.status_produksi === 'SEDANG DI JAHIT' ? 'selected' : ''}>SEDANG DI JAHIT</option>
-                        <option value="TAS SUDAH DI-JAHIT" ${order.status_produksi === 'TAS SUDAH DI JAHIT' ? 'selected' : ''}>TAS SUDAH DI JAHIT</option>
-                        <option value="REJECT PRINT ULANG" ${order.status_produksi === 'REJECT PRINT ULANG' ? 'selected' : ''}>REJECTPRINT ULANG</option>
+                    <select class="status-produksi" data-id="${order.id_input}" data-column="status_produksi">
+                        <option value="Pilih Status" ${order.status_produksi === 'Pilih Status' ? 'selected' : ''}>Pilih Status</option>
+                        <option value="SEDANG DI PRESS" ${order.status_produksi === 'SEDANG DI PRESS' ? 'selected' : ''}>SEDANG DI PRESS</option>
+                        <option value="SEDANG DI JAHIT" ${order.status_produksi === 'SEDANG DI JAHIT' ? 'selected' : ''}>SEDANG DI JAHIT</option>
+                        <option value="TAS SUDAH DI JAHIT" ${order.status_produksi === 'TAS SUDAH DI JAHIT' ? 'selected' : ''}>TAS SUDAH DI JAHIT</option>
+                        <option value="REJECT PRINT ULANG" ${order.status_produksi === 'REJECT PRINT ULANG' ? 'selected' : ''}>REJECT PRINT ULANG</option>
                         <option value="TAS BLM ADA" ${order.status_produksi === 'TAS BLM ADA' ? 'selected' : ''}>TAS BLM ADA</option>
                         <option value="DONE" ${order.status_produksi === 'DONE' ? 'selected' : ''}>DONE</option>
                     </select>
                 </td>
+
                 <td>
                     <div style="display: flex; gap: 10px; justify-content: center;">
                         <button class="desc-table" data-id="${order.id_input}"><i class="fas fa-info-circle"></i></button>
@@ -403,36 +404,29 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("ID Input tidak valid:", order);
             return;
         }
-
+    
         const modalBody = document.getElementById("orderDetails");
         modalBody.innerHTML = '<tr><td colspan="2" class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
         
         try {
             const linkFoto = await fetchLinkFoto(order.id_input);
-            
+    
             modalBody.innerHTML = `
-                <tr><th>ID Pesanan</th><td>${order.id_pesanan || "-"}</td></tr>
-                <tr><th>Admin</th><td>${adminList[order.admin] || "-"}</td></tr>
                 <tr><th>Timestamp</th><td>${order.timestamp || "-"}</td></tr>
-                <tr><th>Deadline</th><td>${formatTanggal(order.deadline) || "-"}</td></tr>
-                <tr><th>Quantity</th><td>${order.qty || "-"}</td></tr>
+                <tr><th>ID Input</th><td>${order.id_input || "-"}</td></tr>
+                <tr><th>ADMIN</th><td>${order.id_admin || "-"}</td></tr>
                 <tr><th>Platform</th><td>${order.platform || "-"}</td></tr>
-                <tr><th>Desainer</th><td>${desainerList[order.desainer] || "-"}</td></tr>
-                <tr><th>Status Print</th><td><span class="badge ${getBadgeClass(order.print_status)}">${order.print_status || "-"}</span></td></tr>
-                <tr><th>Layout Link</th><td>${
-                    order.layout_link 
-                    ? `<a href="${order.layout_link}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-link"></i> Buka Link</a>`
-                    : "-"
-                }</td></tr>
-                <tr><th>Penjahit</th><td>${penjahitList[order.Penjahit] || "-"}</td></tr>
-                <tr><th>QC</th><td>${qcList[order.qc] || "-"}</td></tr>
-                <tr><th>Link Foto</th><td>${
-                    linkFoto && linkFoto !== "-" 
-                    ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>` 
-                    : "Tidak Tersedia"
-                }</td></tr>
+                <tr><th>Quantity</th><td>${order.qty || "-"}</td></tr>
+                <tr><th>Penjahit</th><td>${penjahitList[order.id_penjahit] || "-"}</td></tr>
+                <tr><th>QC</th><td>${qcList[order.id_qc] || "-"}</td></tr>
+                <tr><th>Deadline</th><td>${formatTanggal(order.deadline) || "-"}</td></tr>
+                <tr><th>Status Print</th><td>${order.status_print || "-"}</td></tr>
+                <tr><th>Status Produksi</th><td>${order.status_produksi || "-"}</td></tr>
+                <tr><th>Link Foto</th><td>
+                    ${linkFoto && linkFoto !== "-" ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>` : "Tidak Tersedia"}
+                </td></tr>
             `;
-
+    
             window.currentOrder = order;
             const orderModal = document.getElementById("orderModal");
             const modal = new bootstrap.Modal(orderModal);
@@ -543,7 +537,7 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Get the display name for the column based on selected value
         let displayValue = value;
-            if (column === "Penjahit" && penjahitList[value]) {
+            if (column === "penjahit" && penjahitList[value]) {
                 displayValue = penjahitList[value];
             } else if (column === "qc" && qcList[value]) {
                 displayValue = qcList[value];
@@ -553,7 +547,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // Column display name
         let columnDisplay = column;
         switch(column) {
-            case "Penjahit": columnDisplay = "Penjahit"; break;
+            case "penjahit": columnDisplay = "Penjahit"; break;
             case "qc": columnDisplay = "QC"; break;
         }
         
@@ -625,9 +619,9 @@ document.addEventListener("DOMContentLoaded", function () {
     
         // Map frontend column names to API parameter names
         const columnMapping = {
-            "Penjahit": "id_penjahit",
+            "penjahit": "id_penjahit",
             "qc": "id_qc",
-            "Status_Produksi": "status_produksi"
+            "status_produksi": "status_produksi"
         };
         
         // Get the correct parameter name for the API
@@ -641,10 +635,10 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
         
-        // Convert to integer if it's penjahit or qc
-        if (["id_penjahit", "id_qc"].includes(apiParam)) {
-            value = value ? parseInt(value, 10) : null;
-        }
+        // // Convert to integer if it's penjahit or qc
+        // if (["id_penjahit", "id_qc"].includes(apiParam)) {
+        //     value = value ? parseInt(value, 10) : null;
+        // }
     
         // Create request body according to API format
         const requestBody = { "id_input": id_input };
@@ -763,11 +757,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 valueFormatted = formatTanggal(value);
             } else if (key === "desainer" && desainerList[value]) {
                 valueFormatted = desainerList[value];
-            } else if (key === "Penjahit" && penjahitList[value]) {
+            } else if (key === "id_penjahit" && penjahitList[value]) {
                 valueFormatted = penjahitList[value];
-            } else if (key === "qc" && qcList[value]) {
+            } else if (key === "id_qc" && qcList[value]) {
                 valueFormatted = qcList[value];
-            } else if (key === "admin" && adminList[value]) {
+            } else if (key === "id_admin" && adminList[value]) {
                 valueFormatted = adminList[value];
             }
             
@@ -856,14 +850,14 @@ document.addEventListener("DOMContentLoaded", function () {
         if (processedOrder.desainer && desainerList[processedOrder.desainer]) {
             processedOrder.desainer = desainerList[processedOrder.desainer];
         }
-        if (processedOrder.penjahit && penjahitList[processedOrder.Penjahit]) {
-            processedOrder.penjahit = penjahitList[processedOrder.Penjahit];
+        if (processedOrder.id_penjahit && penjahitList[processedOrder.id_penjahit]) {
+            processedOrder.id_penjahit = penjahitList[processedOrder.id_penjahit];
         }
-        if (processedOrder.qc && qcList[processedOrder.qc]) {
-            processedOrder.qc = qcList[processedOrder.qc];
+        if (processedOrder.id_qc && qcList[processedOrder.id_qc]) {
+            processedOrder.id_qc = qcList[processedOrder.id_qc];
         }
-        if (processedOrder.admin && adminList[processedOrder.admin]) {
-            processedOrder.admin = adminList[processedOrder.admin];
+        if (processedOrder.id_admin && adminList[processedOrder.id_admin]) {
+            processedOrder.id_admin = adminList[processedOrder.id_admin];
         }
         
         const wb = XLSX.utils.book_new();
