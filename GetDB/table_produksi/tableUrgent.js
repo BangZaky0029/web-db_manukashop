@@ -6,19 +6,68 @@ document.addEventListener("DOMContentLoaded", function () {
     let filteredOrders = []; // Data hasil filter
     
     // Define reference data objects
-    const referenceData = {
-        adminList: {},
-        desainerList: {},
-        kurirList: {},
-        penjahitList: {},
-        qcList: {}
-    };
+    let adminList = {};
+    let desainerList = {};
+    let kurirList = {};
+    let penjahitList = {};
+    let qcList = {};
+
+    // Create loading overlay function
+    function showLoadingOverlay() {
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'loading-overlay';
+        loadingOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        `;
+        
+        const spinner = document.createElement('div');
+        spinner.style.cssText = `
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        `;
+        
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        `;
+        
+        document.head.appendChild(style);
+        
+        loadingOverlay.appendChild(spinner);
+        document.body.appendChild(loadingOverlay);
+    }
+
+    function hideLoadingOverlay() {
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.remove();
+        }
+    }
 
     // Initialize the page
     initApp();
 
     async function initApp() {
         try {
+            // Show loading overlay
+            showLoadingOverlay();
+
             // First load reference data
             await fetchReferenceData();
             // Then fetch orders
@@ -27,15 +76,48 @@ document.addEventListener("DOMContentLoaded", function () {
             setupFilterAndSearch();
             // Setup PDF and Excel buttons
             setupDownloadButtons();
-            // Setup auto refresh
+
             setupAutoRefresh();
+            // setupSSE();
         } catch (error) {
             console.error("Error initializing app:", error);
             showResultPopup("Gagal memuat aplikasi. Silakan refresh halaman.", true);
+        } finally {
+            // Hide loading overlay once everything is loaded
+            hideLoadingOverlay();
         }
     }
 
-   // Fungsi untuk memindahkan data ke table_urgent jika deadline hari ini
+    function setupAutoRefresh() {
+        const refreshInterval = 10000; // 10 detik
+    
+        async function autoRefresh() {
+            try {
+                console.log("Auto refresh triggered");
+                await fetchOrders();
+            } catch (error) {
+                console.error("Auto refresh failed:", error);
+                showResultPopup("Gagal melakukan refresh otomatis.", true);
+            } finally {
+                setTimeout(autoRefresh, refreshInterval); // Memanggil dirinya sendiri
+            }
+        }
+    
+        console.log("Auto refresh enabled");
+        autoRefresh(); // Mulai auto-refresh pertama kali
+    }
+
+    // s
+    
+
+// Function to simulate potential longer loading time
+    function simulateSlowLoading() {
+        return new Promise(resolve => {
+            setTimeout(resolve, Math.random() * 1500 + 500); // Random delay between 500-2000ms
+        });
+    }
+
+    // Fungsi untuk memindahkan data ke table_urgent jika deadline hari ini
 async function moveToUrgentTable() {
     try {
         const response = await fetch("http://127.0.0.1:5000/api/move_to_table_urgent", {
@@ -62,7 +144,7 @@ async function moveToUrgentTable() {
     // Setup auto refresh function
     function setupAutoRefresh() {
         // Refresh data every 30 seconds (30000 milliseconds)
-        const refreshInterval = 30000;
+        const refreshInterval = 10000;
         setInterval(async () => {
             await moveToUrgentTable(); // Move new urgent orders
             await fetchOrders(); // Refresh orders
@@ -119,7 +201,6 @@ async function moveToUrgentTable() {
             showResultPopup("Terjadi kesalahan saat mengambil data.", true);
         }
     }
-    
 
     function paginateOrders(orders) {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -277,20 +358,6 @@ async function moveToUrgentTable() {
     }
 
 
-    function formatTimes(deadline) {
-        if (!deadline) return "-"; 
-        const date = new Date(deadline);
-        
-        const day = String(date.getDate()).padStart(2, '0'); // Tanggal (DD)
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Bulan (MM)
-        const year = date.getFullYear(); // Tahun (YYYY)
-    
-        const hours = String(date.getHours()).padStart(2, '0'); // Jam (HH)
-        const minutes = String(date.getMinutes()).padStart(2, '0'); // Menit (mm)
-    
-        return `${day}-${month}-${year} | ${hours}:${minutes}`; // Format DD-MM-YYYY HH:mm
-    }
-    
     function addInputChangeEventListeners() {
         // Event listener untuk dropdown status produksi
         document.querySelectorAll(".status-produksi").forEach(select => {
@@ -313,6 +380,8 @@ async function moveToUrgentTable() {
     }
     
     async function fetchReferenceData() {
+        await simulateSlowLoading(); // Simulate potential slow network
+
         try {
             const response = await fetch("http://127.0.0.1:5000/api/references");
             
@@ -322,23 +391,21 @@ async function moveToUrgentTable() {
             
             const data = await response.json();
     
-            // Mapping reference data efficiently
-            const dataMapping = {
-                table_admin: 'adminList',
-                table_desainer: 'desainerList',
-                table_kurir: 'kurirList', 
-                table_penjahit: 'penjahitList',
-                table_qc: 'qcList'
-            };
-    
-            Object.entries(dataMapping).forEach(([tableKey, listKey]) => {
-                if (data[tableKey]) {
-                    referenceData[listKey] = data[tableKey].reduce((acc, item) => {
-                        acc[item.ID] = item.nama;
-                        return acc;
-                    }, {});
-                }
-            });
+            if (data.table_admin) {
+                data.table_admin.forEach(a => adminList[a.ID] = a.nama);
+            }
+            if (data.table_desainer) {
+                data.table_desainer.forEach(d => desainerList[d.ID] = d.nama);
+            }
+            if (data.table_kurir) {
+                data.table_kurir.forEach(k => kurirList[k.ID] = k.nama);
+            }
+            if (data.table_penjahit) {
+                data.table_penjahit.forEach(p => penjahitList[p.ID] = p.nama);
+            }
+            if (data.table_qc) {
+                data.table_qc.forEach(q => qcList[q.ID] = q.nama);
+            }
     
             console.log("Reference data loaded successfully");
     
@@ -347,7 +414,6 @@ async function moveToUrgentTable() {
             showResultPopup("Gagal memuat data referensi. Beberapa fitur mungkin tidak berfungsi dengan baik.", true);
         }
     }
-
 
     function addDescriptionEventListeners() {
         document.querySelectorAll(".desc-table").forEach(item => {
@@ -409,18 +475,15 @@ async function moveToUrgentTable() {
             const linkFoto = await fetchLinkFoto(order.id_input);
     
             modalBody.innerHTML = `
-                <tr><th>Timestamp</th><td>${order.timestamp || "-"}</td></tr>
                 <tr><th>ID Input</th><td>${order.id_input || "-"}</td></tr>
                 <tr><th>Platform</th><td>${order.platform || "-"}</td></tr>
-                <tr><th>Quantity</th><td>${order.qty || "-"}</td></tr>
-                <tr><th>Penjahit</th><td>${penjahitList[order.id_penjahit] || "-"}</td></tr>
-                <tr><th>QC</th><td>${qcList[order.id_qc] || "-"}</td></tr>
                 <tr><th>Deadline</th><td>${formatTanggal(order.deadline) || "-"}</td></tr>
                 <tr><th>Status Print</th><td>${order.status_print || "-"}</td></tr>
                 <tr><th>Status Produksi</th><td>${order.status_produksi || "-"}</td></tr>
                 <tr><th>Link Foto</th><td>
-                    ${linkFoto && linkFoto !== "-" ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>` : "Tidak Tersedia"}
+                ${linkFoto && linkFoto !== "-" ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>` : "Tidak Tersedia"}
                 </td></tr>
+                <tr><th>Quantity</th><td>${order.qty || "-"}</td></tr>
                 <tr>
                     <th>Detail Pesanan</th>
                     <td style="white-space: pre-line;">${nama_ket || "-"}</td>
@@ -560,22 +623,19 @@ async function moveToUrgentTable() {
             showResultPopup("ID Input atau Column tidak valid!", true);
             return;
         }
-
+    
         const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
         confirmUpdateBtn.disabled = true;
         confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-
-        // Improved column mapping with destructuring
+    
+        // Map frontend column names to API parameter names
         const columnMapping = {
-            "id_input": "id_input",
-            "platform": "platform",
-            "qty": "qty",
-            "deadline": "deadline",
-            "status_print": "status_print",
+            "penjahit": "id_penjahit",
+            "qc": "id_qc",
             "status_produksi": "status_produksi"
         };
-
         
+        // Get the correct parameter name for the API
         const apiParam = columnMapping[column];
         
         if (!apiParam) {
@@ -585,25 +645,29 @@ async function moveToUrgentTable() {
             confirmUpdateBtn.innerHTML = 'Ya, Update';
             return;
         }
-
-        const requestBody = { "id_input": id_input, [apiParam]: value };
-
+    
+        // Create request body according to API format
+        const requestBody = { "id_input": id_input };
+        requestBody[apiParam] = value;
+    
+        console.log("📤 JSON yang dikirim:", JSON.stringify(requestBody));
+    
         fetch(endpoint, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requestBody),
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+            console.log("📥 Response status:", response.status);
             return response.json();
         })
-        .then(async (data) => {
+        .then(data => {
+            console.log("📥 Response JSON:", data);
             if (data.status === "success") {
                 showResultPopup(`✅ Update berhasil: ${column} -> ${value}`);
-                await updateStatusUrgent(); // Trigger status update for urgent table
-                await fetchOrders(); // Auto refresh data after successful update
+    
+                // Auto refresh data after successful update
+                fetchOrders();
             } else {
                 showResultPopup(`⚠️ Update gagal: ${data.message}`, true);
             }

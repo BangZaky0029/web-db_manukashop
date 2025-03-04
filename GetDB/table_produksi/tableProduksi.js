@@ -202,9 +202,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const tableBody = document.getElementById("table-body");
         tableBody.innerHTML = "";
     
-        // Sorting berdasarkan deadline terdekat
-        orders.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
-    
         orders.forEach(order => {
             const row = document.createElement("tr");
             row.innerHTML = `

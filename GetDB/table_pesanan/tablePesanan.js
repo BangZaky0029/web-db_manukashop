@@ -215,7 +215,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (id === 1403) return { color, backgroundColor: "pink" }; // QC lilis
         }
     
-        return { color, backgroundColor: "white" }; // Default color
+        return { color: "black", backgroundColor: "transparent" };
     }
     
     

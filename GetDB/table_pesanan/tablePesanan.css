@@ -534,7 +534,7 @@ select:focus, input[type="text"]:focus {
 }
 
 /* Warna tiap status */
-.option-default { background-color: #808080; color: white; } /* Abu-abu */
+.option-default { background-color: transparent; color: rgb(0, 0, 0); } /* Abu-abu */
 .option-EDITING { background-color: #4169E1; color: white; } /* Biru royal */
 .option-PRINT-VENDOR { background-color: #FF6347; color: white; } /* Tomato */
 .option-PROSES-PRINT { background-color: #FFD700; color: black; } /* Kuning */
@@ -549,4 +549,23 @@ select:focus, input[type="text"]:focus {
 
 tr:nth-child(even) {
     background-color: #f2f2f2;
+}
+
+
+.btn-deadline {
+    display: inline-block;
+    background-color: #ff0000;
+    color: rgb(255, 255, 255);
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    margin-left: 20px;
+}
+
+.btn-deadline:hover {
+    background-color: #ff2929;
 }
