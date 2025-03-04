@@ -245,7 +245,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const qcColor = getColorByID(order.id_qc, 'qc');
             
             row.innerHTML = `
-                <td>${formatTimestampFromString(order.timestamp) || "-"}</td>
+                <td>${order.timestamp || "-"}</td>
                 <td>${order.id_input || "-"}</td>
                 <td>${order.id_pesanan || "-"}</td>
                 <td>${order.platform || "-"}</td>
@@ -279,6 +279,7 @@ document.addEventListener("DOMContentLoaded", function () {
         addInputChangeEventListeners();
         addDescriptionEventListeners();
     }
+    
 
     function formatTimestamp(timestamp) {
         // Jika timestamp kosong, return string kosong
@@ -306,24 +307,6 @@ document.addEventListener("DOMContentLoaded", function () {
         "2025-03-03T16:23:00Z",
         "2025-03-03T16:24:00Z"
     ];
-
-    
-
-    function formatTimestampFromString(timestampString) {
-        // Konversi string timestamp ke objek Date
-        const date = new Date(timestampString);
-        if (isNaN(date.getTime())) return "Invalid Date"; // Validasi timestamp
-        
-        // Ambil jam dan menit
-        let hours = date.getHours().toString().padStart(2, '0'); // Format 2 digit
-        let minutes = date.getMinutes().toString().padStart(2, '0');
-    
-        // Ambil tanggal dan bulan
-        let day = date.getDate().toString().padStart(2, '0');
-        let month = (date.getMonth() + 1).toString().padStart(2, '0'); // getMonth() mulai dari 0
-    
-        return `${hours}:${minutes} / ${day}-${month}`;
-    }  
     
     function addInputChangeEventListeners() {
         document.querySelectorAll(".layout-link-input").forEach(input => {
@@ -349,11 +332,7 @@ document.addEventListener("DOMContentLoaded", function () {
         
         
         });
-
-
-
     }
-
 
     async function fetchReferenceData() {
         try {
