@@ -1,0 +1,16 @@
+{
+  "name": "web-server",
+  "version": "1.0.0",
+  "description": "web untuk menampilkan data pesanan",
+  "main": "mainWEB.js",
+  "scripts": {
+    "deploy": "gh-pages -d ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "homepage": "https://BangZaky0029.github.io/web-db_manukashop",
+  "devDependencies": {
+    "gh-pages": "^5.0.0"
+  }
+}

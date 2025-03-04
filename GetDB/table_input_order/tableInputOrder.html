@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Pesanan</title>
+    <link rel="stylesheet" href="tableInputOrder.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Data Pesanan</h2>
+
+        <div class="search-filter">
+            <input type="text" id="searchInput" placeholder="Cari ID Pesanan...">
+            <button id="searchBtn"><i class="fas fa-search"></i></button>
+            <select id="platformFilter">
+                <option value="all">Semua Platform</option>
+                <option value="Shopee">Shopee</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="TikTok">TikTok</option>
+            </select>
+            <button id="refreshBtn"><i class="fas fa-sync-alt"></i></button>
+        </div>
+
+        <table id="ordersTable">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>ID Input</th>
+                    <th>ID Pesanan</th>
+                    <th>ID</th>
+                    <th>Platform</th>
+                    <th>Qty</th>
+                    <th>Nama Ket</th>
+                    <th>Link</th>
+                    <th>Deadline</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be populated by JavaScript -->
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <button id="prevPage">&lt;</button>
+            <span id="pageInfo">Halaman 1 dari 1</span>
+            <button id="nextPage">&gt;</button>
+        </div>
+    </div>
+
+    <script src="tableInputOrder.js"></script>
+</body>
+</html>

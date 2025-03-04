@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Pesanan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="tablePesanan.css">
+    <link rel="stylesheet" href="GetDB/table_pesanan/tablePesanan.css">
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-tasks"></i> Sistem Manajemen Pesanan</h1>
+        
+        <div class="filter-section">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Cari ID Input...">
+                <button id="searchButton"><i class="fas fa-search"></i></button>
+            </div>
+            <input type="date" id="filter-tanggal">
+            <div class="filter-container">
+                <select id="filterStatus" class="filter-status-dropdown">
+                    <option value="">Pilih Status</option>
+                    <!-- Status Print -->
+                    <option value="EDITING">EDITING</option>
+                    <option value="PRINT VENDOR">PRINT VENDOR</option>
+                    <option value="PROSES PRINT">PROSES PRINT</option>
+                    <option value="SELESAI PRINT">SELESAI PRINT</option>
+                    
+                    <!-- Status Produksi -->
+                    <option value="SEDANG DI PRESS">SEDANG DI PRESS</option>
+                    <option value="SEDANG DI JAHIT">SEDANG DI JAHIT</option>
+                    <option value="TAS SUDAH DI JAHIT">TAS SUDAH DI JAHIT</option>
+                    <option value="REJECT PRINT ULANG">REJECT PRINT ULANG</option>
+                    <option value="TAS BLM ADA">TAS BLM ADA</option>
+                    <option value="DONE">DONE</option>
+                </select>
+                
+                <button id="refreshButton"><i class="fas fa-sync-alt"></i></button>
+            </div>
+            
+        </div>
+        
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-clock"></i> Timestamp</th>
+                        <th><i class="fas fa-hashtag"></i> ID Input</th>
+                        <th><i class="fas fa-hashtag"></i> ID Pesanan</th>
+                        <th><i class="fas fa-shopping-cart"></i> PLT</th>
+                        <th><i class="fas fa-user-tie"></i> Admin</th>
+                        <th><i class="fas fa-boxes"></i> QTY</th>
+                        <th><i class="fas fa-calendar"></i> DLN</th>
+                        <th><i class="fas fa-paint-brush"></i> DSG</th>
+                        <th><i class="fas fa-user-edit"></i>TIME-dsg</th>
+                        <th><i class="fas fa-link"></i> LAY</th>
+                        <th><i class="fas fa-user"></i> SEW</th>
+                        <th><i class="fas fa-user-edit"></i>TIME-sew</th>
+                        <th><i class="fas fa-check"></i> QC</th>
+                        <th><i class="fas fa-user-edit"></i>TIME-qc</th>
+                        <th><i class="fas fa-print"></i> PRT</th>
+                        <th><i class="fas fa-tasks"></i> PROD</th>
+                        <th><i class="fas fa-cogs"></i> Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Data akan diisi oleh JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination-container">
+            <button id="prevPage" class="pagination-btn"><i class="fas fa-chevron-left"></i></button>
+            <span id="pageInfo">Halaman 1 dari 1</span>
+            <button id="nextPage" class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+    
+    <!-- Delete Confirmation Popup -->
+    <div class="popup" id="deletePopup">
+        <div class="popup-content">
+            <div class="popup-icon text-danger">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <h3>Konfirmasi Hapus</h3>
+            <p>Apakah Anda yakin ingin menghapus pesanan ini?</p>
+            <div class="popup-buttons">
+                <button id="confirmDelete" class="btn-confirm">Ya, Hapus</button>
+                <button id="cancelDelete" class="btn-cancel">Batal</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Update Confirmation Popup -->
+    <div class="popup" id="confirmUpdatePopup">
+        <div class="popup-content">
+            <div class="popup-icon text-primary">
+                <i class="fas fa-question-circle"></i>
+            </div>
+            <h3>Konfirmasi Update</h3>
+            <p id="confirmUpdateMessage">Apakah Anda yakin ingin memperbarui data ini?</p>
+            <div class="popup-buttons">
+                <button id="confirmUpdateBtn" class="btn-confirm">Ya, Update</button>
+                <button id="cancelUpdateBtn" class="btn-cancel">Batal</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Result Popup -->
+    <div id="resultPopup">
+        <p id="resultMessage">Operasi berhasil!</p>
+    </div>
+    
+    <!-- Order Detail Modal -->
+    <div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orderModalLabel">Detail Pesanan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered detail-table">
+                        <tbody id="orderDetails">
+                            <!-- Detail pesanan akan diisi oleh JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-primary" id="downloadPDF">Download PDF</button>
+                    <button type="button" class="btn btn-success" id="downloadExcel">Download Excel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- <script src="backup-tablePesanan.js"></script> -->
+    <script src="tablePesanan.js"></script>
+
+</body>
+</html>

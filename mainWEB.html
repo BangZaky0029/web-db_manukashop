@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manuka Dashboard</title>
+    <link rel="stylesheet" href="mainWEB.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <div class="logo-placeholder">
+                        <i class="fas fa-leaf"></i>
+                        <span>MANUKA</span>
+                    </div>
+                </div>
+                <button id="toggleBtn" class="toggle-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-menu">
+                <ul>
+                    <li class="menu-title">MAIN</li>
+                    <li class="menu-item">
+                        <a href="GetDB/table_pesanan/tablePesanan.html" class="menu-link">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Table Pesanan</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="GetDB/table_input_order/tableInputOrder.html" class="menu-link">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Table Input Order</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="PostDB/inputOrder.html" class="menu-link">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Form Input Pesanan</span>
+                        </a>
+                    </li>
+                    <li class="menu-title">PRODUCTION</li>
+                    <li class="menu-item">
+                        <a href="GetDB/table_design/tableDesign.html" class="menu-link">
+                            <i class="fas fa-industry"></i>
+                            <span>Table Design</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="GetDB/table_produksi/tableProduksi.html" class="menu-link">
+                            <i class="fas fa-industry"></i>
+                            <span>Table Produksi</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="footer-menu">
+                    <a href="#" onclick="loadPage('settings.html')" class="footer-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                    <a href="#" onclick="loadPage('account.html')" class="footer-link">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Account</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content Area -->
+        <div class="main-content" id="mainContent">
+            <div class="content-header">
+                <h1>Dashboard</h1>
+                <div class="user-menu">
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="user-info">
+                        <img src="https://via.placeholder.com/40" alt="User Avatar">
+                        <span>Admin User</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div class="welcome-message" id="welcomeMessage">
+                    <h2>Welcome to Manuka Shop Dashboard</h2>
+                    <p>Select a menu item from the sidebar to get started.</p>
+                </div>
+                
+                <!-- Tempat Konten yang Di-load -->
+                <div id="pageContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function loadPage(page) {
+            fetch(page)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById("pageContent").innerHTML = html;
+                    let scripts = document.getElementById("pageContent").querySelectorAll("script");
+                    scripts.forEach(script => {
+                        let newScript = document.createElement("script");
+                        newScript.text = script.text;
+                        document.body.appendChild(newScript);
+                    });
+                })
+                .catch(error => console.error("Error loading page:", error));
+        }
+    </script>
+
+</body>
+</html>
