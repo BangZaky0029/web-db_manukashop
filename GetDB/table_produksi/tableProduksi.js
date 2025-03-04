@@ -230,7 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${order.status_print || "-"}</td>
                 <td>
                     <select class="status-produksi" data-id="${order.id_input}" data-column="status_produksi">
-                        <option value="Pilih Status" ${order.status_produksi === 'Pilih Status' ? 'selected' : ''}>Pilih Status</option>
+                        <option value="-" ${order.status_produksi === '-' ? 'selected' : ''}>-</option>
                         <option value="SEDANG DI PRESS" ${order.status_produksi === 'SEDANG DI PRESS' ? 'selected' : ''}>SEDANG DI PRESS</option>
                         <option value="SEDANG DI JAHIT" ${order.status_produksi === 'SEDANG DI JAHIT' ? 'selected' : ''}>SEDANG DI JAHIT</option>
                         <option value="TAS SUDAH DI JAHIT" ${order.status_produksi === 'TAS SUDAH DI JAHIT' ? 'selected' : ''}>TAS SUDAH DI JAHIT</option>

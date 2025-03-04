@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manuka Dashboard</title>
     <link rel="stylesheet" href="mainWEB.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Add some basic styles for loading and error states -->
 </head>
 <body>
     <div class="dashboard-container">
@@ -14,7 +13,6 @@
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-container">
-                    <!-- Placeholder for logo -->
                     <div class="logo-placeholder">
                         <i class="fas fa-leaf"></i>
                         <span>MANUKA</span>
@@ -28,19 +26,6 @@
             <div class="sidebar-menu">
                 <ul>
                     <li class="menu-title">MAIN</li>
-                    <li class="menu-item active">
-                        <a href="#" class="menu-link">
-                            <i class="fas fa-tachometer-alt"></i>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="menu-item">
-                        <a href="#" class="menu-link">
-                            <i class="fas fa-users"></i>
-                            <span>User</span>
-                        </a>
-                    </li>
-                    <li class="menu-title">ORDER MANAGEMENT</li>
                     <li class="menu-item">
                         <a href="GetDB/table_pesanan/tablePesanan.html" class="menu-link">
                             <i class="fas fa-shopping-cart"></i>
@@ -61,13 +46,13 @@
                     </li>
                     <li class="menu-title">PRODUCTION</li>
                     <li class="menu-item">
-                        <a href="#" class="menu-link">
+                        <a href="GetDB/table_design/tableDesign.html" class="menu-link">
                             <i class="fas fa-industry"></i>
                             <span>Table Design</span>
                         </a>
                     </li>
                     <li class="menu-item">
-                        <a href="#" class="menu-link">
+                        <a href="GetDB/table_produksi/tableProduksi.html" class="menu-link">
                             <i class="fas fa-industry"></i>
                             <span>Table Produksi</span>
                         </a>
@@ -77,11 +62,11 @@
             
             <div class="sidebar-footer">
                 <div class="footer-menu">
-                    <a href="#" class="footer-link">
+                    <a href="#" onclick="loadPage('settings.html')" class="footer-link">
                         <i class="fas fa-cog"></i>
                         <span>Settings</span>
                     </a>
-                    <a href="#" class="footer-link">
+                    <a href="#" onclick="loadPage('account.html')" class="footer-link">
                         <i class="fas fa-user-circle"></i>
                         <span>Account</span>
                     </a>
@@ -106,18 +91,33 @@
             </div>
             
             <div class="content-area">
-                <!-- Default welcome message -->
                 <div class="welcome-message" id="welcomeMessage">
                     <h2>Welcome to Manuka Shop Dashboard</h2>
                     <p>Select a menu item from the sidebar to get started.</p>
                 </div>
                 
-                <!-- Content from other pages will be loaded here -->
+                <!-- Tempat Konten yang Di-load -->
                 <div id="pageContent"></div>
             </div>
         </div>
     </div>
     
-    <script src="mainWEB.js"></script>
+    <script>
+        function loadPage(page) {
+            fetch(page)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById("pageContent").innerHTML = html;
+                    let scripts = document.getElementById("pageContent").querySelectorAll("script");
+                    scripts.forEach(script => {
+                        let newScript = document.createElement("script");
+                        newScript.text = script.text;
+                        document.body.appendChild(newScript);
+                    });
+                })
+                .catch(error => console.error("Error loading page:", error));
+        }
+    </script>
+
 </body>
 </html>

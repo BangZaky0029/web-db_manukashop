@@ -296,8 +296,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }    
     
-
-
     async function fetchReferenceData() {
         try {
             const response = await fetch("http://127.0.0.1:5000/api/references");
@@ -383,7 +381,8 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("ID Input tidak valid:", order);
             return;
         }
-        const adminName = await fetchAdminId(order.id_input); 
+        const adminName = await fetchAdminId(order.id_input);
+        const ketNama = await fetchNamaKet(order.id_input); 
 
         const modalBody = document.getElementById("orderDetails");
         modalBody.innerHTML = '<tr><td colspan="2" class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
@@ -410,7 +409,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>` 
                     : "Tidak Tersedia"
                 }</td></tr>
-            `;
+                <tr><th>Keterangan Pesanan</th><td>${ketNama}</td></tr>
+                `;
 
             window.currentOrder = order;
             const orderModal = document.getElementById("orderModal");
@@ -422,6 +422,29 @@ document.addEventListener("DOMContentLoaded", function () {
             modalBody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">Gagal memuat data pesanan: ${error.message}</td></tr>`;
         }
     }
+
+    async function fetchNamaKet(idInput) {
+        const baseUrl = "http://127.0.0.1:5000"; // Sesuaikan dengan URL API kamu
+        const url = `${baseUrl}/api/get_nama_ket/${idInput}`;
+    
+        try {
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+    
+            const data = await response.json();
+            
+            // Pastikan mengembalikan hanya `nama_ket` agar tidak error
+            return data.nama_ket || "Tidak ada keterangan"; 
+    
+        } catch (error) {
+            console.error("Gagal mengambil keterangan pesanan:", error);
+            return "Error mengambil data"; 
+        }
+    }
+    
 
     async function fetchAdminId(id_input) {
         if (!id_input || id_input === "-") {
