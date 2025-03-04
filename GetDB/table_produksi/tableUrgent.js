@@ -5,13 +5,14 @@ document.addEventListener("DOMContentLoaded", function () {
     let allOrders = [];
     let filteredOrders = []; // Data hasil filter
     
-
     // Define reference data objects
-    let adminList = {};
-    let desainerList = {};
-    let kurirList = {};
-    let penjahitList = {};
-    let qcList = {};
+    const referenceData = {
+        adminList: {},
+        desainerList: {},
+        kurirList: {},
+        penjahitList: {},
+        qcList: {}
+    };
 
     // Initialize the page
     initApp();
@@ -25,46 +26,92 @@ document.addEventListener("DOMContentLoaded", function () {
             // Add event listeners for filter and search
             setupFilterAndSearch();
             // Setup PDF and Excel buttons
+            setupDownloadButtons();
+            // Setup auto refresh
+            setupAutoRefresh();
         } catch (error) {
             console.error("Error initializing app:", error);
             showResultPopup("Gagal memuat aplikasi. Silakan refresh halaman.", true);
         }
     }
 
-    document.getElementById("inputForm").addEventListener("submit", async function (event) {
-        event.preventDefault(); // Hindari reload form
-    
-        const formData = new FormData(this);
-        const response = await fetch("http://127.0.0.1:5000/api/get_table_design", {
+   // Fungsi untuk memindahkan data ke table_urgent jika deadline hari ini
+async function moveToUrgentTable() {
+    try {
+        const response = await fetch("http://127.0.0.1:5000/api/move_to_table_urgent", {
             method: "POST",
-            body: JSON.stringify(Object.fromEntries(formData)),
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json" }
         });
-    
-        const result = await response.json();
-        if (result.status === "success") {
-            fetchOrders();  // Panggil ulang data jika sukses
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
-    });
-    
+        
+        const result = await response.json();
+        console.log("Move to urgent table result:", result);
 
-    async function fetchOrders() {
+        // Setelah data dipindahkan, refresh tampilan tabel
+        await fetchOrders();  
+    } catch (error) {
+        console.error("Error moving orders to urgent table:", error);
+        showResultPopup("Gagal memindahkan pesanan ke tabel urgent.", true);
+    }
+}
+
+
+    // Setup auto refresh function
+    function setupAutoRefresh() {
+        // Refresh data every 30 seconds (30000 milliseconds)
+        const refreshInterval = 30000;
+        setInterval(async () => {
+            await moveToUrgentTable(); // Move new urgent orders
+            await fetchOrders(); // Refresh orders
+            await updateStatusUrgent(); // Update statuses
+        }, refreshInterval);
+        console.log("Auto refresh enabled - data will update every 30 seconds");
+    }
+
+    // New function to update urgent table statuses
+    async function updateStatusUrgent() {
         try {
-            const response = await fetch("http://127.0.0.1:5000/api/get_table_design");
+            // Bulk update status for all orders
+            const orderIds = allOrders.map(order => order.id_input);
             
+            const response = await fetch("http://127.0.0.1:5000/api/update_status_urgent", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ order_ids: orderIds })
+            });
+
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            
-            const data = await response.json();
-            console.log("Data orders:", data); // Cek di console
 
-            if (data.status === "success") {
+            const result = await response.json();
+            console.log("Bulk status update result:", result);
+        } catch (error) {
+            console.error("Error updating urgent table statuses:", error);
+        }
+    }
+
+    async function fetchOrders() {
+        try {
+            const response = await fetch("http://127.0.0.1:5000/api/get_table_urgent");
+    
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+    
+            const data = await response.json();
+            console.log("Data orders:", data); // Debugging
+    
+            if (data.status === "success" && Array.isArray(data.data)) {
                 allOrders = data.data;
                 renderOrdersTable(paginateOrders(allOrders));
                 updatePagination();
+                await updateStatusUrgent(); // Panggil setelah tabel selesai diperbarui
             } else {
-                console.error("Gagal mengambil data:", data.message);
+                console.error("Gagal mengambil data:", data.message || "Format response salah");
                 showResultPopup("Gagal mengambil data pesanan.", true);
             }
         } catch (error) {
@@ -72,6 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
             showResultPopup("Terjadi kesalahan saat mengambil data.", true);
         }
     }
+    
 
     function paginateOrders(orders) {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -188,39 +236,20 @@ document.addEventListener("DOMContentLoaded", function () {
         const tableBody = document.getElementById("table-body");
         tableBody.innerHTML = "";
     
+        // Sorting berdasarkan deadline terdekat
+        orders.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+    
         orders.forEach(order => {
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>${formatTimes(order.timestamp) || "-"}</td>
                 <td>${order.id_input || "-"}</td>
                 <td style="color: ${getPlatformColor(order.platform).color}; background-color: ${getPlatformColor(order.platform).backgroundColor}; padding: 5px; border-radius: 5px;">
                     ${order.platform || "-"}
                 </td>
                 <td>${order.qty || "-"}</td>
-                <td>
-                    <select class="desainer-dropdown" data-id="${order.id_input}" data-column="desainer">
-                        <option value="">Pilih Desainer</option>
-                        ${Object.entries(desainerList).map(([id, nama]) =>
-                            `<option value="${id}" ${order.id_designer == id ? 'selected' : ''}>${nama}</option>`
-                        ).join('')}
-                    </select>
-                </td>
-                <td>
-                    <input type="text" class="layout-link-input" data-id="${order.id_input}" data-column="layout_link"
-                        value="${order.layout_link || ''}" placeholder="Masukkan link" />
-                    <button class="submit-link-btn" data-id="${order.id_input}">Submit</button>
-                    <button class="open-link-btn" data-id="${order.id_input}">🔗</button>
-                </td>
                 <td>${formatTanggal(order.deadline)}</td>
-                <td>
-                    <select class="status-print option" data-id="${order.id_input}" data-column="print_status">
-                        <option value="-" ${order.status_print === '-' ? 'selected' : ''}>-</option>
-                        <option value="EDITING" ${order.status_print === 'EDITING' ? 'selected' : ''}>EDITING</option>
-                        <option value="PRINT VENDOR" ${order.status_print === 'PRINT VENDOR' ? 'selected' : ''}>PRINT VENDOR</option>
-                        <option value="PROSES PRINT" ${order.status_print === 'PROSES PRINT' ? 'selected' : ''}>PROSES PRINT</option>
-                        <option value="SELESAI PRINT" ${order.status_print === 'SELESAI PRINT' ? 'selected' : ''}>SELESAI PRINT</option>
-                    </select>
-                </td>
+                <td>${order.status_print || "-"}</td>
+                <td>${order.status_produksi || "-"}</td>
                 <td>
                     <div style="display: flex; gap: 10px; justify-content: center;">
                         <button class="desc-table" data-id="${order.id_input}"><i class="fas fa-info-circle"></i></button>
@@ -230,7 +259,6 @@ document.addEventListener("DOMContentLoaded", function () {
             tableBody.appendChild(row);
         });
     
-        addDeleteEventListeners();
         addUpdateEventListeners();
         addInputChangeEventListeners();
         addDescriptionEventListeners();
@@ -249,7 +277,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    
     function formatTimes(deadline) {
         if (!deadline) return "-"; 
         const date = new Date(deadline);
@@ -265,66 +292,25 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function addInputChangeEventListeners() {
-        // ✅ Event listener untuk input layout link (diperbarui saat blur)
-        document.querySelectorAll(".layout-link-input").forEach(input => {
-            input.addEventListener("blur", function() {
-                const id_pesanan = this.dataset.id;
-                const column = this.dataset.column;
-                const value = this.value;
-    
-                updateOrderWithConfirmation(id_pesanan, column, value);
-            });
-        });
-    
-        // ✅ Event listener untuk tombol submit link
-        document.querySelectorAll(".submit-link-btn").forEach(button => {
-            button.addEventListener("click", function() {
-                const id_pesanan = this.dataset.id;
-                const input = document.querySelector(`.layout-link-input[data-id="${id_pesanan}"]`);
-                const value = input.value.trim();
-    
-                if (value) {
-                    updateOrderWithConfirmation(id_pesanan, "layout_link", value);
-                } else {
-                    alert("Masukkan link sebelum submit.");
-                }
-            });
-        });
-    
-        // ✅ Event listener untuk tombol membuka link di tab baru
-        document.querySelectorAll(".open-link-btn").forEach(button => {
-            button.addEventListener("click", function() {
-                const id_pesanan = this.dataset.id;
-                const input = document.querySelector(`.layout-link-input[data-id="${id_pesanan}"]`);
-                const link = input.value.trim();
-    
-                if (link) {
-                    window.open(link, "_blank");
-                } else {
-                    alert("Link belum tersedia.");
-                }
-            });
-        });
-    
-        // ✅ Event listener untuk dropdown status produksi (diperbarui saat diubah)
-        document.querySelectorAll(".status-print").forEach(select => {
+        // Event listener untuk dropdown status produksi
+        document.querySelectorAll(".status-produksi").forEach(select => {
             select.addEventListener("change", function () {
                 const id_input = this.dataset.id;
                 const column = this.dataset.column;
                 const value = this.value;
     
-                updateOrder(id_input, column, value); // Pastikan fungsi dipanggil dengan parameter yang benar
+                updateOrderWithConfirmation(id_input, column, value);
             });
     
-            updateSelectColor(select); // ✅ Pindahkan ini agar dijalankan setelah event listener ditambahkan
+            updateSelectColor(select);
         });
     
-        // ✅ Fungsi untuk mengubah warna berdasarkan status print
+        // Fungsi untuk mengubah warna berdasarkan status produksi
         function updateSelectColor(select) {
             let selectedValue = select.value.replace(/ /g, "-"); // Ganti spasi dengan "-"
-            select.className = `status-print option-${selectedValue}`;
+            select.className = `status-produksi option-${selectedValue}`;
         }
-    }    
+    }
     
     async function fetchReferenceData() {
         try {
@@ -336,21 +322,23 @@ document.addEventListener("DOMContentLoaded", function () {
             
             const data = await response.json();
     
-            if (data.table_admin) {
-                data.table_admin.forEach(a => adminList[a.ID] = a.nama);
-            }
-            if (data.table_desainer) {
-                data.table_desainer.forEach(d => desainerList[d.ID] = d.nama);
-            }
-            if (data.table_kurir) {
-                data.table_kurir.forEach(k => kurirList[k.ID] = k.nama);
-            }
-            if (data.table_penjahit) {
-                data.table_penjahit.forEach(p => penjahitList[p.ID] = p.nama);
-            }
-            if (data.table_qc) {
-                data.table_qc.forEach(q => qcList[q.ID] = q.nama);
-            }
+            // Mapping reference data efficiently
+            const dataMapping = {
+                table_admin: 'adminList',
+                table_desainer: 'desainerList',
+                table_kurir: 'kurirList', 
+                table_penjahit: 'penjahitList',
+                table_qc: 'qcList'
+            };
+    
+            Object.entries(dataMapping).forEach(([tableKey, listKey]) => {
+                if (data[tableKey]) {
+                    referenceData[listKey] = data[tableKey].reduce((acc, item) => {
+                        acc[item.ID] = item.nama;
+                        return acc;
+                    }, {});
+                }
+            });
     
             console.log("Reference data loaded successfully");
     
@@ -359,6 +347,7 @@ document.addEventListener("DOMContentLoaded", function () {
             showResultPopup("Gagal memuat data referensi. Beberapa fitur mungkin tidak berfungsi dengan baik.", true);
         }
     }
+
 
     function addDescriptionEventListeners() {
         document.querySelectorAll(".desc-table").forEach(item => {
@@ -411,40 +400,33 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("ID Input tidak valid:", order);
             return;
         }
-        const adminName = await fetchAdminId(order.id_input);
-        const ketNama = await fetchNamaKet(order.id_input); 
-
+    
         const modalBody = document.getElementById("orderDetails");
         modalBody.innerHTML = '<tr><td colspan="2" class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
+        const nama_ket = await fetchNamaKet(order.id_input)
         
         try {
             const linkFoto = await fetchLinkFoto(order.id_input);
-            
+    
             modalBody.innerHTML = `
-                <tr><th>ID INPUT</th><td>${order.id_input || "-"}</td></tr>
-                <tr><th>Admin</th><td>${adminName}</td></tr>
                 <tr><th>Timestamp</th><td>${order.timestamp || "-"}</td></tr>
-                <tr><th>Deadline</th><td>${formatTanggal(order.deadline) || "-"}</td></tr>
-                <tr><th>Quantity</th><td>${order.qty || "-"}</td></tr>
+                <tr><th>ID Input</th><td>${order.id_input || "-"}</td></tr>
                 <tr><th>Platform</th><td>${order.platform || "-"}</td></tr>
-                <tr><th>Desainer</th><td>${desainerList[order.id_designer] || "-"}</td></tr>
-                <tr><th>Status Print</th><td><span class="badge ${getBadgeClass(order.status_print)}">${order.status_print || "-"}</span></td></tr>
-                <tr><th>Layout Link</th><td>${
-                    order.layout_link 
-                    ? `<a href="${order.layout_link}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-link"></i> Buka Link</a>`
-                    : "-"
-                }</td></tr>
-                <tr><th>Link Foto</th><td>${
-                    linkFoto && linkFoto !== "-" 
-                    ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>` 
-                    : "Tidak Tersedia"
-                }</td></tr>
+                <tr><th>Quantity</th><td>${order.qty || "-"}</td></tr>
+                <tr><th>Penjahit</th><td>${penjahitList[order.id_penjahit] || "-"}</td></tr>
+                <tr><th>QC</th><td>${qcList[order.id_qc] || "-"}</td></tr>
+                <tr><th>Deadline</th><td>${formatTanggal(order.deadline) || "-"}</td></tr>
+                <tr><th>Status Print</th><td>${order.status_print || "-"}</td></tr>
+                <tr><th>Status Produksi</th><td>${order.status_produksi || "-"}</td></tr>
+                <tr><th>Link Foto</th><td>
+                    ${linkFoto && linkFoto !== "-" ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>` : "Tidak Tersedia"}
+                </td></tr>
                 <tr>
                     <th>Detail Pesanan</th>
-                    <td style="white-space: pre-line;">${ketNama || "-"}</td>
+                    <td style="white-space: pre-line;">${nama_ket || "-"}</td>
                 </tr>
-                `;
-
+            `;
+    
             window.currentOrder = order;
             const orderModal = document.getElementById("orderModal");
             const modal = new bootstrap.Modal(orderModal);
@@ -478,111 +460,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     
-
-    async function fetchAdminId(id_input) {
-        if (!id_input || id_input === "-") {
-            console.warn("❌ ID Input tidak valid:", id_input);
-            return "-";
-        }
-    
-        try {
-            const response = await fetch(`http://127.0.0.1:5000/api/get_id_admin/${id_input}`);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-    
-            if (!data || !data.id_admin) {
-                console.warn("⚠️ ID Admin tidak ditemukan untuk:", id_input);
-                return "-";
-            }
-            
-            return adminList[data.id_admin] || data.id_admin; // Ambil nama admin atau ID jika tidak ada di list
-        
-        } catch (error) {
-            console.error("❌ Error fetching ID Admin:", error);
-            return "-";
-        }
-    }
-    
-    
-    function getBadgeClass(status) {
-        switch(status) {
-            case '-': return 'bg-primary text-white';
-            case 'SEDANG DI-PRESS': return 'bg-indigo text-white';
-            case 'SEDANG DI-JAHIT': return 'bg-success text-white';
-            case 'TAS SUDAH DI-JAHIT': return 'bg-teal text-white';
-            case 'REJECT : PRINT ULANG': return 'bg-danger text-white';
-            case 'TAS BLM ADA': return 'bg-danger text-white';
-            case 'DONE': return 'bg-success text-white';
-            default: return 'bg-secondary text-white';
-        }
-    }
-    
-    
-    function addDeleteEventListeners() {
-        document.querySelectorAll(".delete-icon").forEach(icon => {
-            icon.addEventListener("click", function() {
-                selectedOrderId = this.getAttribute("data-id");
-                
-                const deletePopup = document.getElementById("deletePopup");
-                deletePopup.classList.add("active");
-            });
-        });
-        
-        // Add event listeners for popup buttons
-        document.getElementById("confirmDelete").addEventListener("click", handleConfirmDelete);
-        document.getElementById("cancelDelete").addEventListener("click", handleCancelDelete);
-    }
-    
-    function handleConfirmDelete() {
-        if (!selectedOrderId) {
-            showResultPopup("Error: ID pesanan tidak valid.", true);
-            return;
-        }
-    
-        const confirmDeleteBtn = document.getElementById("confirmDelete");
-        confirmDeleteBtn.disabled = true;
-        confirmDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghapus...';
-    
-        // Corrected endpoint to use id_input instead of id_pesanan
-        fetch(`http://127.0.0.1:5000/api/delete-order/${encodeURIComponent(selectedOrderId.trim())}`, { 
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.status === "success") {
-                showResultPopup("Pesanan berhasil dihapus!");
-                fetchOrders(); // Refresh the order list
-            } else {
-                showResultPopup(`Gagal menghapus: ${data.message || "Unknown error"}`, true);
-            }
-        })
-        .catch(error => {
-            console.error("Error saat menghapus pesanan:", error);
-            showResultPopup(`Terjadi kesalahan: ${error.message}`, true);
-        })
-        .finally(() => {
-            confirmDeleteBtn.disabled = false;
-            confirmDeleteBtn.innerHTML = 'Ya, Hapus';
-            document.getElementById("deletePopup").classList.remove("active");
-            selectedOrderId = null;
-        });
-    }
-    
-    function handleCancelDelete() {
-        document.getElementById("deletePopup").classList.remove("active");
-        selectedOrderId = null;
-    }
-    
     function showResultPopup(message, isError = false) {
         const popup = document.getElementById("resultPopup");
         const resultMessage = document.getElementById("resultMessage");
@@ -607,16 +484,19 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Get the display name for the column based on selected value
         let displayValue = value;
-        if (column === "id_designer" && desainerList[value]) {
-            displayValue = desainerList[value];
+        if (column === "penjahit" && penjahitList[value]) {
+            displayValue = penjahitList[value];
+        } else if (column === "qc" && qcList[value]) {
+            displayValue = qcList[value];
         }
+
         
-        // Column display name for user interface
+        // Column display name
         let columnDisplay = column;
         switch(column) {
-            case "id_designer": columnDisplay = "Desainer"; break;
-            case "status_print": columnDisplay = "Status Print"; break;
-            case "layout_link": columnDisplay = "Layout Link"; break;
+            case "penjahit": columnDisplay = "Penjahit"; break;
+            case "qc": columnDisplay = "QC"; break;
+            case "status_produksi": columnDisplay = "Status Produksi"; break;
         }
         
         confirmMessage.innerText = `Yakin ingin update ${columnDisplay} menjadi "${displayValue}" untuk ID Pesanan ${id_input}?`;
@@ -629,20 +509,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function addUpdateEventListeners() {
-        // For all dropdowns with data-column attribute (print-status and desainer)
+        // For all dropdowns with data-column attribute
         document.querySelectorAll("select[data-column]").forEach(select => {
             select.addEventListener("change", function () {
                 const id_input = this.dataset.id;
-                let column = this.dataset.column;
-                const value = this.value;
-                
-                // Map the column names to match the API expectations
-                if (column === "print_status") {
-                    column = "status_print";
-                } else if (column === "desainer") {
-                    column = "id_designer";
-                }
-                
+                const column = this.dataset.column;
+                let value = this.value;
+        
+                // Update with confirmation dialog
                 updateOrderWithConfirmation(id_input, column, value);
             });
         });
@@ -670,70 +544,72 @@ document.addEventListener("DOMContentLoaded", function () {
             if (element) {
                 const originalOrder = allOrders.find(order => order.id_input == popup.dataset.id);
                 if (originalOrder && element.tagName === "SELECT") {
-                    // Map back from API field names to UI field names
-                    let fieldName = popup.dataset.column;
-                    if (fieldName === "status_print") {
-                        fieldName = "print_status";
-                    } else if (fieldName === "id_designer") {
-                        fieldName = "desainer";
-                    }
-                    element.value = originalOrder[fieldName] || "";
+                    element.value = originalOrder[popup.dataset.column] || "";
                 } else if (originalOrder && element.tagName === "INPUT") {
-                    let fieldName = popup.dataset.column;
-                    if (fieldName === "layout_link") {
-                        fieldName = "layout_link"; // Note capital L in "Layout_link"
-                    }
-                    element.value = originalOrder[fieldName] || "";
+                    element.value = originalOrder[popup.dataset.column] || "";
                 }
             }
         });
     }
     
     function updateOrder(id_input, column, value) {
-        const endpoint = "http://127.0.0.1:5000/api/update-design";
-    
+        const endpoint = "http://127.0.0.1:5000/api/sync-prod-to-pesanan";
+        
+        if (!id_input || !column) {
+            console.error("❌ Gagal mengirim update: id_input atau column tidak valid");
+            showResultPopup("ID Input atau Column tidak valid!", true);
+            return;
+        }
+
         const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
         confirmUpdateBtn.disabled = true;
         confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-    
-        // Buat format JSON sesuai yang diharapkan API
-        const payload = {
-            id_input: id_input,
-            id_designer: null,
-            layout_link: null,
-            status_print: null
+
+        // Improved column mapping with destructuring
+        const columnMapping = {
+            "id_input": "id_input",
+            "platform": "platform",
+            "qty": "qty",
+            "deadline": "deadline",
+            "status_print": "status_print",
+            "status_produksi": "status_produksi"
         };
-    
-        // Pastikan field yang diubah dimasukkan ke dalam JSON
-        if (column === "id_designer") {
-            payload.id_designer = value;
-        } else if (column === "layout_link") {
-            payload.layout_link = value;
-        } else if (column === "status_print") {
-            payload.status_print = value;
+
+        
+        const apiParam = columnMapping[column];
+        
+        if (!apiParam) {
+            console.error("❌ Kolom tidak valid untuk update:", column);
+            showResultPopup(`Kolom tidak valid: ${column}`, true);
+            confirmUpdateBtn.disabled = false;
+            confirmUpdateBtn.innerHTML = 'Ya, Update';
+            return;
         }
-    
+
+        const requestBody = { "id_input": id_input, [apiParam]: value };
+
         fetch(endpoint, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(requestBody),
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`Gagal update! Status: ${response.status}`);
-            } 
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
             return response.json();
         })
-        .then(data => {
+        .then(async (data) => {
             if (data.status === "success") {
-                showResultPopup(`Update berhasil: ${column} -> ${value}`);
-                fetchOrders(); // Ambil data terbaru setelah update sukses
+                showResultPopup(`✅ Update berhasil: ${column} -> ${value}`);
+                await updateStatusUrgent(); // Trigger status update for urgent table
+                await fetchOrders(); // Auto refresh data after successful update
             } else {
-                showResultPopup(`Update gagal: ${data.message}`, true);
+                showResultPopup(`⚠️ Update gagal: ${data.message}`, true);
             }
         })
         .catch(error => {
-            console.error("Error:", error);
+            console.error("❌ Error:", error);
             showResultPopup(`Terjadi kesalahan saat update: ${error.message}`, true);
         })
         .finally(() => {
@@ -741,6 +617,24 @@ document.addEventListener("DOMContentLoaded", function () {
             confirmUpdateBtn.innerHTML = 'Ya, Update';
         });
     }
-    
-    
+
+    // Setup download buttons if they exist
+    function setupDownloadButtons() {
+        const pdfButton = document.getElementById("downloadPDF");
+        const excelButton = document.getElementById("downloadExcel");
+        
+        if (pdfButton) {
+            pdfButton.addEventListener("click", function() {
+                // Implement PDF download functionality
+                showResultPopup("Downloading PDF...");
+            });
+        }
+        
+        if (excelButton) {
+            excelButton.addEventListener("click", function() {
+                // Implement Excel download functionality
+                showResultPopup("Downloading Excel...");
+            });
+        }
+    }
 });

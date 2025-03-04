@@ -1,56 +1,77 @@
-// Tunggu hingga DOM dimuat
 document.addEventListener('DOMContentLoaded', function() {
+    // Debugging: Cek apakah elemen form sudah ada di DOM
+    console.log(document.getElementById('id_pesanan'));  
+    console.log(document.getElementById('deadline'));
+    console.log(document.querySelector('input[name="platform"]:checked')); 
+
+    // Mapping nama admin
+    const adminNames = {
+        '1001': 'Lilis',
+        '1002': 'Ina'
+    };
+
+    // Ambil admin yang sedang login dari localStorage
+    const currentAdminId = localStorage.getItem('currentAdminId');
+    if (!currentAdminId) {
+        window.location.href = 'login.html'; // Redirect kalau belum login
+        return;
+    }
+
+    // Tampilkan nama admin yang login
+    const adminNameElement = document.getElementById('adminName');
+    const logoutBtn = document.getElementById('logoutBtn');
+    adminNameElement.textContent = `Logged in as: ${adminNames[currentAdminId]}`;
+
+    // Logout
+    logoutBtn.addEventListener('click', function() {
+        localStorage.removeItem('currentAdminId');
+        window.location.href = 'login.html';
+    });
+
     const orderForm = document.getElementById('orderForm');
     const responseMessage = document.getElementById('responseMessage');
+    const submitBtn = document.getElementById('submitBtn');
 
-    orderForm.addEventListener('submit', async function(event) {
-        event.preventDefault();
+    // **🛠 Form Validation**
+    function validateForm() {
+        const idPesanan = document.getElementById("id_pesanan").value.trim();
+        const deadline = document.getElementById("deadline").value;
+        const qty = document.getElementById("qty").value.trim();
+        const namaKet = document.getElementById("nama_ket").value.trim();
+        const link = document.getElementById("link").value.trim();
+        const platformChecked = document.querySelector('input[name="platform"]:checked');
 
-        // Ambil nilai input
-        const id_pesanan = document.getElementById('id_pesanan').value.trim();
-        const deadline = document.getElementById('deadline').value;
-        const qty = document.getElementById('qty').value.trim();
-        const nama_ket = document.getElementById('nama_ket').value.trim();
-        const link = document.getElementById('link').value.trim();
-
-        // Ambil admin yang dipilih
-        const id_admin = document.querySelector('input[name="admin"]:checked')?.value;
-        const Platform = document.querySelector('input[name="platform"]:checked')?.value;
-
-        // Validasi input wajib
-        if (!id_pesanan) return showMessage('❌ ID Pesanan wajib diisi!', 'error');
-        if (!id_admin) return showMessage('❌ Silakan pilih Admin!', 'error');
+        if (!idPesanan) return showMessage('❌ ID Pesanan wajib diisi!', 'error');
         if (!deadline) return showMessage('❌ Deadline wajib diisi!', 'error');
-        if (!Platform) return showMessage('❌ Silakan pilih Platform!', 'error');
+        if (!platformChecked) return showMessage('❌ Silakan pilih Platform!', 'error');
 
-        // Validasi qty (angka positif)
         const parsedQty = qty ? parseInt(qty, 10) : 0;
-        if (isNaN(parsedQty) || parsedQty < 1) {
-            return showMessage('❌ Jumlah harus angka positif!', 'error');
-        }
+        if (isNaN(parsedQty) || parsedQty < 1) return showMessage('❌ Jumlah harus angka positif!', 'error');
 
-        // Validasi format link (opsional)
         if (link && !/^https?:\/\/\S+/.test(link)) {
             return showMessage('❌ Format link tidak valid!', 'error');
         }
 
-        // Susun data JSON
-        const orderData = {
-            id_pesanan,
-            id_admin,
-            Deadline: deadline,
-            Platform,
-            qty: parsedQty,
-            nama_ket,
-            link
-        };
+        return true;
+    }
 
-        // Kirim data ke API
-        await submitOrder(orderData);
-    });
+    orderForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        if (!validateForm()) return;
+        submitBtn.disabled = true;
+        responseMessage.innerHTML = '';
 
-    async function submitOrder(orderData) {
         try {
+            const orderData = {
+                id_pesanan: document.getElementById('id_pesanan').value.trim(),
+                id_admin: currentAdminId,
+                Deadline: document.getElementById('deadline').value,
+                Platform: document.querySelector('input[name="platform"]:checked').value,
+                qty: parseInt(document.getElementById('qty').value.trim(), 10),
+                nama_ket: document.getElementById('nama_ket').value.trim(),
+                link: document.getElementById('link').value.trim()
+            };
+
             showMessage('⏳ Sedang mengirim data...', 'loading');
 
             const response = await fetch('http://127.0.0.1:5000/api/input-order', {
@@ -63,13 +84,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(orderData)
             });
 
-            // Cek jika response tidak sukses
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.message || `HTTP error! Status: ${response.status}`);
+                throw new Error(errorData?.message || `Gagal mengirim data. Status: ${response.status}`);
             }
 
-            // Ambil data response
             const data = await response.json();
             showMessage(`✅ Data berhasil disimpan dengan ID: ${data?.data?.id_input || 'N/A'}`, 'success');
             orderForm.reset();
@@ -83,8 +102,10 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 showMessage(`❌ ${error.message}`, 'error');
             }
+        } finally {
+            submitBtn.disabled = false;
         }
-    }
+    });
 
     function showMessage(message, type) {
         responseMessage.innerHTML = `<span style="color:${type === 'success' ? 'green' : 'red'}">${message}</span>`;

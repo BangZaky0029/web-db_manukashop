@@ -3,25 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring Production</title>
+    <title>List Orderan Urgent</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="tableProduksi.css">
+    <link rel="stylesheet" href="tableUrgent.css">
 </head>
 <body>
     <div class="container">
-        <h1><i class="fas fa-tasks"></i>Monitoring Production</h1>
+        <h1><i class="fas fa-tasks"></i>List Orderan Urgent</h1>
         
         <div class="filter-section">
             <div class="search-container">
                 <input type="text" id="searchInput" placeholder="Cari ID Pesanan...">
                 <button id="searchButton"><i class="fas fa-search"></i></button>
-                <a href="tableUrgent.html" 
-                    target="_blank" 
-                    class="btn-deadline">
-                        DEADLINE HARI INI
-                    </a>
             </div>
             
             <div class="filter-container">
@@ -30,7 +25,7 @@
                     <option value="SEDANG DI PRESS">SEDANG DI PRESS</option>
                     <option value="SEDANG DI JAHIT">SEDANG DI JAHIT</option>
                     <option value="TAS SUDAH DI JAHIT">TAS SUDAH DI JAHIT</option>
-                    <option value="REJECT PRINT ULANG">REJECT PRINT ULANG</option>
+                    <option value="REJECT PRINT ULANG">REJECT:PRINT ULANG</option>
                     <option value="TAS BLM ADA">TAS BLM ADA</option>
                     <option value="DONE">DONE</option>
                 </select>
@@ -43,15 +38,12 @@
             <table>
                 <thead>
                     <tr>
-                        <th><i class="fas fa-clock"></i> Timestamp</th>
                         <th><i class="fas fa-id-card"></i> ID Input</th>
-                        <th><i class="fas fa-shopping-cart"></i> PlF</th>
+                        <th><i class="fas fa-shopping-cart"></i> Platform</th>
                         <th><i class="fas fa-boxes"></i> QTY</th>
-                        <th><i class="fas fa-user"></i> SEW</th>
-                        <th><i class="fas fa-check-circle"></i> QC</th>
-                        <th><i class="fas fa-calendar"></i> DLN</th>
-                        <th><i class="fas fa-print"></i> PRT</th>
-                        <th><i class="fas fa-tasks"></i> PROD</th>
+                        <th><i class="fas fa-calendar"></i> Deadline</th>
+                        <th><i class="fas fa-print"></i> Status Print</th>
+                        <th><i class="fas fa-tasks"></i> Status Produksi</th>
                         <th><i class="fas fa-cogs"></i> Aksi</th>
                     </tr>
                 </thead>
@@ -127,7 +119,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- <script src="backup-tableDesign.js"></script> -->
-    <script src="tableProduksi.js"></script>
+    <script src="tableUrgent.js"></script>
 
 </body>
 </html>

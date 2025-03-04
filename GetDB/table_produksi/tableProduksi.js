@@ -202,29 +202,33 @@ document.addEventListener("DOMContentLoaded", function () {
         const tableBody = document.getElementById("table-body");
         tableBody.innerHTML = "";
     
+        // Sorting berdasarkan deadline terdekat
+        orders.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+    
         orders.forEach(order => {
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>${order.timestamp || "-"}</td>
+                <td>${formatTimes(order.timestamp) || "-"}</td>
                 <td>${order.id_input || "-"}</td>
-                <td>${order.platform || "-"}</td>
+                <td style="color: ${getPlatformColor(order.platform).color}; background-color: ${getPlatformColor(order.platform).backgroundColor}; padding: 5px; border-radius: 5px;">
+                    ${order.platform || "-"}
+                </td>
                 <td>${order.qty || "-"}</td>
                 <td>
-                <select class="penjahit-dropdown" data-id="${order.id_input}" data-column="penjahit">
-                <option value="">Pilih Penjahit</option>
-                ${Object.entries(penjahitList).map(([id, nama]) =>
-                    `<option value="${id}" ${order.id_penjahit == id ? 'selected' : ''}>${nama}</option>`
-                ).join('')}
-                </select>
+                    <select class="penjahit-dropdown" data-id="${order.id_input}" data-column="penjahit">
+                    <option value="">Pilih Penjahit</option>
+                    ${Object.entries(penjahitList).map(([id, nama]) =>
+                        `<option value="${id}" ${order.id_penjahit == id ? 'selected' : ''}>${nama}</option>`
+                    ).join('')}
+                    </select>
                 </td>
-                
                 <td>
-                <select class="qc-dropdown" data-id="${order.id_input}" data-column="qc">
-                <option value="">Pilih QC</option>
-                ${Object.entries(qcList).map(([id, nama]) =>
-                    `<option value="${id}" ${order.id_qc == id ? 'selected' : ''}>${nama}</option>`
-                ).join('')}
-                </select>
+                    <select class="qc-dropdown" data-id="${order.id_input}" data-column="qc">
+                    <option value="">Pilih QC</option>
+                    ${Object.entries(qcList).map(([id, nama]) =>
+                        `<option value="${id}" ${order.id_qc == id ? 'selected' : ''}>${nama}</option>`
+                    ).join('')}
+                    </select>
                 </td>
                 <td>${formatTanggal(order.deadline)}</td>
                 <td>${order.status_print || "-"}</td>
@@ -239,7 +243,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         <option value="DONE" ${order.status_produksi === 'DONE' ? 'selected' : ''}>DONE</option>
                     </select>
                 </td>
-
                 <td>
                     <div style="display: flex; gap: 10px; justify-content: center;">
                         <button class="desc-table" data-id="${order.id_input}"><i class="fas fa-info-circle"></i></button>
@@ -248,10 +251,37 @@ document.addEventListener("DOMContentLoaded", function () {
             `;
             tableBody.appendChild(row);
         });
-        
+    
         addUpdateEventListeners();
         addInputChangeEventListeners();
         addDescriptionEventListeners();
+    }
+
+    function getPlatformColor(platform) {
+        const colors = {
+            "Shopee": { color: "#FFFFFF", backgroundColor: "#EE4D2D" },   // Oranye Shopee
+            "TikTok": { color: "#FFFFFF", backgroundColor: "#000000" },   // Hitam TikTok
+            "Tokopedia": { color: "#FFFFFF", backgroundColor: "#00AA5B" }, // Hijau Tokopedia
+            "Lazada": { color: "#FFFFFF", backgroundColor: "#1A4DBE" },   // Biru Lazada
+            "WhatsApp": { color: "#FFFFFF", backgroundColor: "#25D366" }  // Hijau WhatsApp
+        };
+    
+        return colors[platform] || { color: "#FFFFFF", backgroundColor: "#333" }; // Default warna abu-abu gelap
+    }
+
+
+    function formatTimes(deadline) {
+        if (!deadline) return "-"; 
+        const date = new Date(deadline);
+        
+        const day = String(date.getDate()).padStart(2, '0'); // Tanggal (DD)
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Bulan (MM)
+        const year = date.getFullYear(); // Tahun (YYYY)
+    
+        const hours = String(date.getHours()).padStart(2, '0'); // Jam (HH)
+        const minutes = String(date.getMinutes()).padStart(2, '0'); // Menit (mm)
+    
+        return `${day}-${month}-${year} | ${hours}:${minutes}`; // Format DD-MM-YYYY HH:mm
     }
     
     function addInputChangeEventListeners() {
@@ -363,6 +393,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
         const modalBody = document.getElementById("orderDetails");
         modalBody.innerHTML = '<tr><td colspan="2" class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
+        const nama_ket = await fetchNamaKet(order.id_input)
         
         try {
             const linkFoto = await fetchLinkFoto(order.id_input);
@@ -380,6 +411,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 <tr><th>Link Foto</th><td>
                     ${linkFoto && linkFoto !== "-" ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>` : "Tidak Tersedia"}
                 </td></tr>
+                <tr>
+                    <th>Detail Pesanan</th>
+                    <td style="white-space: pre-line;">${nama_ket || "-"}</td>
+                </tr>
             `;
     
             window.currentOrder = order;
@@ -390,6 +425,28 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
             console.error("Error showing modal:", error);
             modalBody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">Gagal memuat data pesanan: ${error.message}</td></tr>`;
+        }
+    }
+
+    async function fetchNamaKet(idInput) {
+        const baseUrl = "http://127.0.0.1:5000"; // Sesuaikan dengan URL API kamu
+        const url = `${baseUrl}/api/get_nama_ket/${idInput}`;
+    
+        try {
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+    
+            const data = await response.json();
+            
+            // Pastikan mengembalikan hanya `nama_ket` agar tidak error
+            return data.nama_ket || "Tidak ada keterangan"; 
+    
+        } catch (error) {
+            console.error("Gagal mengambil keterangan pesanan:", error);
+            return "Error mengambil data"; 
         }
     }
     

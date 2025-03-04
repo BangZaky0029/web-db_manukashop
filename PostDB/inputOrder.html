@@ -5,45 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Input Order</title>
     <link rel="stylesheet" href="inputOrder.css">
-    <!-- Add Google Fonts - Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h2>Form Input Order</h2>
+        <div class="header">
+            <h2>Form Input Order</h2>
+            <div class="user-info">
+                <span id="adminName" class="admin-name"></span>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
         <form id="orderForm">
             <div class="form-group">
                 <label for="id_pesanan">ID Pesanan</label>
-                <input type="text" id="id_pesanan" placeholder="Masukkan ID pesanan" required>
-            </div>
-    
-            <div class="form-group">
-                <label>Admin</label>
-                <div class="radio-container">
-                    <div class="radio-item">
-                        <input type="radio" id="admin1001" name="admin" value="1001">
-                        <label for="admin1001">Lilis</label>
-                    </div>
-                    
-                    <div class="radio-item">
-                        <input type="radio" id="admin1002" name="admin" value="1002">
-                        <label for="admin1002">Ina</label>
-                    </div>
-                </div>
+                <input type="text" id="id_pesanan" name="id_pesanan" placeholder="Masukkan ID pesanan" required>
             </div>
     
             <div class="form-group">
                 <label for="deadline">Deadline</label>
-                <input type="date" id="deadline" required>
+                <input type="date" id="deadline" name="deadline" required>
             </div>
     
             <div class="form-group">
                 <label>Platform</label>
                 <div class="radio-container">
                     <div class="radio-item">
-                        <input type="radio" id="platformShopee" name="platform" value="Shopee">
+                        <input type="radio" id="platformShopee" name="platform" value="Shopee" required>
                         <label for="platformShopee">Shopee</label>
                     </div>
                     
@@ -69,22 +59,28 @@
                 </div>
             </div>
             
-            <div class="form-group">
-                <label for="qty">Jumlah</label>
-                <input type="text" id="qty" placeholder="Masukkan jumlah pesanan">
+            <div class="form-group jumlah">
+                <label for="jumlah">Jumlah</label>
+                <input type="number" id="qty" placeholder="Masukkan jumlah pesanan">
             </div>
+            
             
             <div class="form-group">
                 <label for="nama_ket">Keterangan Orderan</label>
-                <input type="text" id="nama_ket" placeholder="Masukkan keterangan pesanan">
+                <textarea id="nama_ket" name="nama_ket" placeholder="Masukkan keterangan pesanan detail" rows="4">
+ Nama                  : 
+ Type                    : 
+ Motif/Kode         : 
+ Keterangan       : 
+                </textarea>
             </div>
             
             <div class="form-group">
                 <label for="link">Link</label>
-                <input type="url" id="link" placeholder="https://...">
+                <input type="url" id="link" name="link" placeholder="https://...">
             </div>
     
-            <button type="submit">Kirim Data</button>
+            <button type="submit" id="submitBtn">Kirim Data</button>
         </form>
     
         <div id="responseMessage"></div>

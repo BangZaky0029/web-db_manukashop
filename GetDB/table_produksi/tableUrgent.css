@@ -499,21 +499,3 @@ select:focus, input[type="text"]:focus {
     background-color: #8B008B; color: white; } /* Ungu tua */
 .status-produksi.option-DONE { 
     background-color: #008000; color: white; } /* Hijau */
-
-    .btn-deadline {
-        display: inline-block;
-        background-color: #007bff;
-        color: white;
-        font-size: 16px;
-        font-weight: bold;
-        padding: 10px 20px;
-        border-radius: 25px;
-        text-decoration: none;
-        transition: background-color 0.3s ease;
-        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-    }
-    
-    .btn-deadline:hover {
-        background-color: #0056b3;
-    }
-    

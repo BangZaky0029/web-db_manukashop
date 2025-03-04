@@ -1,0 +1,119 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+body {
+    background-color: #f5f7fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: #333;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px;
+    padding: 32px;
+}
+
+.login-box {
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(149, 157, 165, 0.2);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+}
+
+h2 {
+    margin-bottom: 24px;
+    color: #2d3748;
+    font-size: 24px;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+h2:after {
+    content: '';
+    position: absolute;
+    width: 60px;
+    height: 3px;
+    background: #a084e8;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 2px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 8px;
+}
+
+select, input[type="password"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 15px;
+    background: #f8fafc;
+    transition: all 0.3s;
+}
+
+select:focus, input[type="password"]:focus {
+    border-color: #a084e8;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(160, 132, 232, 0.2);
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    background-color: #a084e8;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(160, 132, 232, 0.3);
+}
+
+button:hover {
+    background-color: #8d74d2;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(160, 132, 232, 0.4);
+}
+
+#loginMessage {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.error-message {
+    color: #c62828;
+    background-color: #ffebee;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.success-message {
+    color: #2e7d32;
+    background-color: #e6f7e6;
+    padding: 10px;
+    border-radius: 8px;
+}

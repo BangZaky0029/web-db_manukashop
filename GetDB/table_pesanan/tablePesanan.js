@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function initApp() {
         try {
-            // setupEventListeners();
+            fetchSortedOrders();
             // First load reference data
             await fetchReferenceData();
             // Then fetch orders
@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
             showResultPopup("Gagal memuat aplikasi. Silakan refresh halaman.", true);
         }
     }
+    
 
     document.getElementById("inputForm").addEventListener("submit", async function (event) {
         event.preventDefault(); // Hindari reload form
@@ -49,7 +50,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         
     });
-    
 
     async function fetchOrders() {
         try {
@@ -188,18 +188,6 @@ document.addEventListener("DOMContentLoaded", function () {
         
         showResultPopup(`Ditemukan ${filteredOrders.length} pesanan dengan status: ${status}`);
     }
-
-    function formatTanggal(dateString) {
-        if (!dateString) return "-";
-        
-        const dateObj = new Date(dateString);
-        if (isNaN(dateObj)) return dateString;
-    
-        const day = String(dateObj.getDate()).padStart(2, '0');
-        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    
-        return `${day}-${month}`;
-    }
     
     function getColorByID(id, table) {
         // Mengembalikan warna teks dan background berdasarkan ID dan tabelnya (admin, desainer, kurir, dll)
@@ -245,10 +233,12 @@ document.addEventListener("DOMContentLoaded", function () {
             const qcColor = getColorByID(order.id_qc, 'qc');
             
             row.innerHTML = `
-                <td>${order.timestamp || "-"}</td>
+                <td>${formatTimes(order.timestamp) || "-"}</td>
                 <td>${order.id_input || "-"}</td>
                 <td>${order.id_pesanan || "-"}</td>
-                <td>${order.platform || "-"}</td>
+                <td style="color: ${getPlatformColor(order.platform).color}; background-color: ${getPlatformColor(order.platform).backgroundColor}; padding: 5px; border-radius: 5px;">
+                    ${order.platform || "-"}
+                </td>
                 <td style="color: ${adminColor.color}; background-color: ${adminColor.backgroundColor}; padding: 5px; border-radius: 5px;">${adminList[order.id_admin] || "-"}</td>
                 <td>${order.qty || "-"}</td>
                 <td>${formatTanggal(order.deadline)}</td>
@@ -273,12 +263,83 @@ document.addEventListener("DOMContentLoaded", function () {
             `;
             tableBody.appendChild(row);
         });
-    
         addDeleteEventListeners();
         addUpdateEventListeners();
         addInputChangeEventListeners();
         addDescriptionEventListeners();
     }
+
+    function getPlatformColor(platform) {
+        const colors = {
+            "Shopee": { color: "#FFFFFF", backgroundColor: "#EE4D2D" },   // Oranye Shopee
+            "TikTok": { color: "#FFFFFF", backgroundColor: "#000000" },   // Hitam TikTok
+            "Tokopedia": { color: "#FFFFFF", backgroundColor: "#00AA5B" }, // Hijau Tokopedia
+            "Lazada": { color: "#FFFFFF", backgroundColor: "#1A4DBE" },   // Biru Lazada
+            "WhatsApp": { color: "#FFFFFF", backgroundColor: "#25D366" }  // Hijau WhatsApp
+        };
+    
+        return colors[platform] || { color: "#FFFFFF", backgroundColor: "#333" }; // Default warna abu-abu gelap
+    }
+    
+    
+
+    function formatTanggal(dateString) {
+        if (!dateString) return "-";
+        
+        const dateObj = new Date(dateString);
+        if (isNaN(dateObj)) return dateString;
+    
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    
+        return `${day}-${month}`;
+    }
+    
+    function formatTimes(deadline) {
+        if (!deadline) return "-"; 
+        const date = new Date(deadline);
+        
+        const day = String(date.getDate()).padStart(2, '0'); // Tanggal (DD)
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Bulan (MM)
+        const year = date.getFullYear(); // Tahun (YYYY)
+    
+        const hours = String(date.getHours()).padStart(2, '0'); // Jam (HH)
+        const minutes = String(date.getMinutes()).padStart(2, '0'); // Menit (mm)
+    
+        return `${day}-${month}-${year} | ${hours}:${minutes}`; // Format DD-MM-YYYY HH:mm
+    }
+    
+    
+    
+
+    async function fetchSortedOrders() {
+        try {
+            console.log("Fetching sorted orders...");
+            const response = await fetch('http://127.0.0.1:5000/api/get_sorted_orders'); 
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const data = await response.json();
+            
+            console.log("Data pesanan yang diterima:", data.orders); // Debugging
+    
+            if (data.orders) {
+                console.table(data.orders); // Tambahkan debugging untuk melihat data
+                renderOrdersTable(data.orders);
+            } else {
+                console.error("Data orders tidak ditemukan");
+            }
+        } catch (error) {
+            console.error("Gagal mengambil data:", error);
+        }
+    }
+    
+    
+    
+
+    
+    
+    
     
 
     function formatTimestamp(timestamp) {
@@ -422,6 +483,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
         const modalBody = document.getElementById("orderDetails");
         modalBody.innerHTML = '<tr><td colspan="2" class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
+        const detail = await fetchNamaKet(order.id_input);
         
         try {
             const linkFoto = await fetchLinkFoto(order.id_input);
@@ -463,6 +525,10 @@ document.addEventListener("DOMContentLoaded", function () {
                         ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>`
                         : "Tidak Tersedia"}
                 </td></tr>
+                <tr>
+                    <th>Detail Pesanan</th>
+                    <td style="white-space: pre-line;">${detail || "-"}</td>
+                </tr>
             `;
     
             window.currentOrder = order;
@@ -473,6 +539,29 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
             console.error("Error showing modal:", error);
             modalBody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">Gagal memuat data pesanan: ${error.message}</td></tr>`;
+        }
+    }
+
+
+    async function fetchNamaKet(idInput) {
+        const baseUrl = "http://127.0.0.1:5000"; // Sesuaikan dengan URL API kamu
+        const url = `${baseUrl}/api/get_nama_ket/${idInput}`;
+    
+        try {
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+    
+            const data = await response.json();
+            
+            // Pastikan mengembalikan hanya `nama_ket` agar tidak error
+            return data.nama_ket || "Tidak ada keterangan"; 
+    
+        } catch (error) {
+            console.error("Gagal mengambil keterangan pesanan:", error);
+            return "Error mengambil data"; 
         }
     }
     
