@@ -25,8 +25,6 @@ document.addEventListener("DOMContentLoaded", function () {
             // Add event listeners for filter and search
             setupFilterAndSearch();
             // Setup PDF and Excel buttons
-            setupDownloadButtons();
-            // Setup WebSocket for real-time updates
         } catch (error) {
             console.error("Error initializing app:", error);
             showResultPopup("Gagal memuat aplikasi. Silakan refresh halaman.", true);
@@ -207,11 +205,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 </td>
                 <td>
                     <input type="text" class="layout-link-input" data-id="${order.id_input}" data-column="layout_link"
-                           value="${order.layout_link || ''}" placeholder="Masukkan link" />
+                        value="${order.layout_link || ''}" placeholder="Masukkan link" />
+                    <button class="submit-link-btn" data-id="${order.id_input}">Submit</button>
+                    <button class="open-link-btn" data-id="${order.id_input}">🔗</button>
                 </td>
                 <td>${formatTanggal(order.deadline)}</td>
                 <td>
-                    <select class="print-status-dropdown" data-id="${order.id_input}" data-column="print_status">
+                    <select class="status-print option" data-id="${order.id_input}" data-column="print_status">
                         <option value="-" ${order.status_print === '-' ? 'selected' : ''}>-</option>
                         <option value="EDITING" ${order.status_print === 'EDITING' ? 'selected' : ''}>EDITING</option>
                         <option value="PRINT VENDOR" ${order.status_print === 'PRINT VENDOR' ? 'selected' : ''}>PRINT VENDOR</option>
@@ -241,8 +241,38 @@ document.addEventListener("DOMContentLoaded", function () {
                 const id_pesanan = this.dataset.id;
                 const column = this.dataset.column;
                 const value = this.value;
-                
+    
                 updateOrderWithConfirmation(id_pesanan, column, value);
+            });
+        });
+    
+        // ✅ Event listener untuk tombol submit link
+        document.querySelectorAll(".submit-link-btn").forEach(button => {
+            button.addEventListener("click", function() {
+                const id_pesanan = this.dataset.id;
+                const input = document.querySelector(`.layout-link-input[data-id="${id_pesanan}"]`);
+                const value = input.value.trim();
+    
+                if (value) {
+                    updateOrderWithConfirmation(id_pesanan, "layout_link", value);
+                } else {
+                    alert("Masukkan link sebelum submit.");
+                }
+            });
+        });
+    
+        // ✅ Event listener untuk tombol membuka link di tab baru
+        document.querySelectorAll(".open-link-btn").forEach(button => {
+            button.addEventListener("click", function() {
+                const id_pesanan = this.dataset.id;
+                const input = document.querySelector(`.layout-link-input[data-id="${id_pesanan}"]`);
+                const link = input.value.trim();
+    
+                if (link) {
+                    window.open(link, "_blank");
+                } else {
+                    alert("Link belum tersedia.");
+                }
             });
         });
     
@@ -264,7 +294,7 @@ document.addEventListener("DOMContentLoaded", function () {
             let selectedValue = select.value.replace(/ /g, "-"); // Ganti spasi dengan "-"
             select.className = `status-print option-${selectedValue}`;
         }
-    }
+    }    
     
 
 
@@ -353,6 +383,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("ID Input tidak valid:", order);
             return;
         }
+        const adminName = await fetchAdminId(order.id_input); 
 
         const modalBody = document.getElementById("orderDetails");
         modalBody.innerHTML = '<tr><td colspan="2" class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
@@ -362,7 +393,7 @@ document.addEventListener("DOMContentLoaded", function () {
             
             modalBody.innerHTML = `
                 <tr><th>ID INPUT</th><td>${order.id_input || "-"}</td></tr>
-                <tr><th>Admin</th><td>${adminList[order.id_admin] || "-"}</td></tr>
+                <tr><th>Admin</th><td>${adminName}</td></tr>
                 <tr><th>Timestamp</th><td>${order.timestamp || "-"}</td></tr>
                 <tr><th>Deadline</th><td>${formatTanggal(order.deadline) || "-"}</td></tr>
                 <tr><th>Quantity</th><td>${order.qty || "-"}</td></tr>
@@ -374,8 +405,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     ? `<a href="${order.layout_link}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-link"></i> Buka Link</a>`
                     : "-"
                 }</td></tr>
-                <tr><th>Penjahit</th><td>${penjahitList[order.id_penjahit] || "-"}</td></tr>
-                <tr><th>QC</th><td>${qcList[order.id_qc] || "-"}</td></tr>
                 <tr><th>Link Foto</th><td>${
                     linkFoto && linkFoto !== "-" 
                     ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>` 
@@ -393,6 +422,35 @@ document.addEventListener("DOMContentLoaded", function () {
             modalBody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">Gagal memuat data pesanan: ${error.message}</td></tr>`;
         }
     }
+
+    async function fetchAdminId(id_input) {
+        if (!id_input || id_input === "-") {
+            console.warn("❌ ID Input tidak valid:", id_input);
+            return "-";
+        }
+    
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/api/get_id_admin/${id_input}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+    
+            if (!data || !data.id_admin) {
+                console.warn("⚠️ ID Admin tidak ditemukan untuk:", id_input);
+                return "-";
+            }
+            
+            return adminList[data.id_admin] || data.id_admin; // Ambil nama admin atau ID jika tidak ada di list
+        
+        } catch (error) {
+            console.error("❌ Error fetching ID Admin:", error);
+            return "-";
+        }
+    }
+    
     
     function getBadgeClass(status) {
         switch(status) {
@@ -576,23 +634,33 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function updateOrder(id_input, column, value) {
-        const endpoint = column === "id_designer" || column === "layout_link" || column === "status_print" 
-            ? "http://127.0.0.1:5000/api/update-design"
-            : "http://127.0.0.1:5000/api/update-print-status-layout";
+        const endpoint = "http://127.0.0.1:5000/api/update-design";
     
         const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
         confirmUpdateBtn.disabled = true;
         confirmUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     
+        // Buat format JSON sesuai yang diharapkan API
+        const payload = {
+            id_input: id_input,
+            id_designer: null,
+            layout_link: null,
+            status_print: null
+        };
+    
+        // Pastikan field yang diubah dimasukkan ke dalam JSON
+        if (column === "id_designer") {
+            payload.id_designer = value;
+        } else if (column === "layout_link") {
+            payload.layout_link = value;
+        } else if (column === "status_print") {
+            payload.status_print = value;
+        }
+    
         fetch(endpoint, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                id_input: id_input,
-                id_designer: column === "id_designer" ? value : undefined,  
-                column: column,
-                value: value
-            })
+            body: JSON.stringify(payload)
         })
         .then(response => {
             if (!response.ok) {
@@ -619,248 +687,4 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     
-    
-    function setupDownloadButtons() {
-        // PDF Download button
-        document.getElementById("downloadPDF").addEventListener("click", function() {
-            handleDownloadPDF();
-        });
-        
-        // Excel Download button
-        document.getElementById("downloadExcel").addEventListener("click", function() {
-            handleDownloadExcel();
-        });
-    }
-    
-    function handleDownloadPDF() {
-        if (!window.currentOrder) {
-            showResultPopup("Tidak ada data pesanan untuk di-download.", true);
-            return;
-        }
-        
-        const downloadBtn = document.getElementById("downloadPDF");
-        downloadBtn.disabled = true;
-        downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
-        
-        // Check if jsPDF is loaded
-        if (typeof jspdf === 'undefined' || typeof jspdf.jsPDF === 'undefined') {
-            loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js")
-                .then(() => {
-                    generatePDF(window.currentOrder);
-                    downloadBtn.disabled = false;
-                    downloadBtn.innerHTML = 'Download PDF';
-                })
-                .catch(error => {
-                    console.error("Failed to load jsPDF:", error);
-                    showResultPopup("Gagal memuat library PDF.", true);
-                    downloadBtn.disabled = false;
-                    downloadBtn.innerHTML = 'Download PDF';
-                });
-        } else {
-            generatePDF(window.currentOrder);
-            downloadBtn.disabled = false;
-            downloadBtn.innerHTML = 'Download PDF';
-        }
-    }
-    
-    function generatePDF(order) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        // Add header
-        doc.setFontSize(18);
-        doc.setTextColor(26, 115, 232); // #1a73e8
-        doc.text("Detail Pesanan", 105, 15, { align: "center" });
-        
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-        doc.text(`ID Pesanan: ${order.id_pesanan || "-"}`, 105, 25, { align: "center" });
-        
-        // Add line
-        doc.setDrawColor(26, 115, 232);
-        doc.setLineWidth(0.5);
-        doc.line(20, 30, 190, 30);
-        
-        // Set initial position
-        let y = 40;
-        
-        // Function to add a row
-        function addRow(key, value) {
-            const keyFormatted = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
-            
-            // Format value if it's from a reference list
-            let valueFormatted = value || "-";
-            
-            if (key === "deadline") {
-                valueFormatted = formatTanggal(value);
-            } else if (key === "id_desainer" && desainerList[value]) {
-                valueFormatted = desainerList[value];
-            } else if (key === "id_enjahit" && penjahitList[value]) {
-                valueFormatted = penjahitList[value];
-            } else if (key === "id_qc" && qcList[value]) {
-                valueFormatted = qcList[value];
-            } else if (key === "id_ admin" && adminList[value]) {
-                valueFormatted = adminList[value];
-            }
-            
-            doc.setFont(undefined, "bold");
-            doc.text(`${keyFormatted}:`, 20, y);
-            doc.setFont(undefined, "normal");
-            doc.text(`${valueFormatted}`, 80, y);
-            y += 10;
-            
-            // Add page if we're near the bottom
-            if (y > 280) {
-                doc.addPage();
-                y = 20;
-            }
-        }
-        
-        // Add data rows in a specific order
-        const orderedKeys = [
-            "id_input", "timestamp", "platform", "deadline", "qty", "id_designer", "status_print", "layout_link"
-        ];
-        
-        orderedKeys.forEach(key => {
-            if (order.hasOwnProperty(key)) {
-                addRow(key, order[key]);
-            }
-        });
-        
-        // Add other properties that weren't in the ordered list
-        Object.entries(order).forEach(([key, value]) => {
-            if (!orderedKeys.includes(key)) {
-                addRow(key, value);
-            }
-        });
-        
-        // Add footer
-        const pageCount = doc.internal.getNumberOfPages();
-        doc.setFont(undefined, "italic");
-        doc.setFontSize(10);
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.text(`Generated on ${new Date().toLocaleString()} - Page ${i} of ${pageCount}`, 105, 290, { align: "center" });
-        }
-    
-        doc.save(`Order_${order.id_pesanan}.pdf`);
-        showResultPopup("PDF berhasil didownload!");
-    }
-    
-    function handleDownloadExcel() {
-        if (!window.currentOrder) {
-            showResultPopup("Tidak ada data pesanan untuk di-download.", true);
-            return;
-        }
-        
-        const downloadBtn = document.getElementById("downloadExcel");
-        downloadBtn.disabled = true;
-        downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Excel...';
-        
-        // Check if XLSX is loaded
-        if (typeof XLSX === 'undefined') {
-            loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js")
-                .then(() => {
-                    generateExcel(window.currentOrder);
-                    downloadBtn.disabled = false;
-                    downloadBtn.innerHTML = 'Download Excel';
-                })
-                .catch(error => {
-                    console.error("Failed to load XLSX:", error);
-                    showResultPopup("Gagal memuat library Excel.", true);
-                    downloadBtn.disabled = false;
-                    downloadBtn.innerHTML = 'Download Excel';
-                });
-        } else {
-            generateExcel(window.currentOrder);
-            downloadBtn.disabled = false;
-            downloadBtn.innerHTML = 'Download Excel';
-        }
-    }
-    
-    function generateExcel(order) {
-        const processedOrder = {...order};
-        
-        // Format values for better readability
-        if (processedOrder.deadline) {
-            processedOrder.deadline = formatTanggal(processedOrder.deadline);
-        }
-        if (processedOrder.id_designer && desainerList[processedOrder.id_designer]) {
-            processedOrder.id_designer = desainerList[processedOrder.id_designer];
-        }
-        if (processedOrder.penjahit && penjahitList[processedOrder.penjahit]) {
-            processedOrder.penjahit = penjahitList[processedOrder.penjahit];
-        }
-        if (processedOrder.qc && qcList[processedOrder.qc]) {
-            processedOrder.qc = qcList[processedOrder.qc];
-        }
-        if (processedOrder.id_admin && adminList[processedOrder.id_admin]) {
-            processedOrder.id_admin = adminList[processedOrder.id_admin];
-        }
-        
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet([processedOrder]);
-        
-        XLSX.utils.book_append_sheet(wb, ws, "OrderDetails");
-        XLSX.writeFile(wb, `Order_${order.id_pesanan}.xlsx`);
-        showResultPopup("Excel berhasil didownload!");
-    }
-    
-    // Load external scripts dynamically
-    function loadScript(src) {
-        return new Promise((resolve, reject) => {
-            // Check if script is already loaded
-            if (document.querySelector(`script[src="${src}"]`)) {
-                resolve(function addDeleteEventListeners() {
-                    const tableBody = document.querySelector('table tbody');
-                    const deletePopup = document.getElementById("deletePopup");
-                    const confirmDeleteBtn = document.getElementById("confirmDelete");
-                    const cancelDeleteBtn = document.getElementById("cancelDelete");
-                
-                    // Use event delegation for better performance
-                    tableBody.addEventListener('click', function(event) {
-                        const deleteIcon = event.target.closest('.delete-icon');
-                        if (deleteIcon) {
-                            event.preventDefault();
-                            const orderId = deleteIcon.getAttribute("data-id");
-                            if (orderId) {
-                                showDeleteConfirmation(orderId);
-                            } else {
-                                console.error("Invalid order ID for deletion");
-                            }
-                        }
-                    });
-                
-                    function showDeleteConfirmation(orderId) {
-                        selectedOrderId = orderId;
-                        deletePopup.classList.add("active");
-                    }
-                
-                    // Add event listeners for the popup buttons
-                    confirmDeleteBtn.addEventListener("click", handleConfirmDelete);
-                    cancelDeleteBtn.addEventListener("click", handleCancelDelete);
-                
-                    // Keyboard accessibility
-                    deletePopup.addEventListener('keydown', function(event) {
-                        if (event.key === 'Escape') {
-                            handleCancelDelete();
-                        } else if (event.key === 'Enter' && event.target === confirmDeleteBtn) {
-                            handleConfirmDelete();
-                        }
-                    });
-                });
-                return;
-            }
-            
-            const script = document.createElement('script');
-            script.src = src;
-            script.onload = resolve;
-            script.onerror = reject;
-            document.body.appendChild(script);
-        });
-    }
-    
-    // Preload external libraries
-    loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-    loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
 });

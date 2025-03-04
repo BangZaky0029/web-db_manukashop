@@ -47,6 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (result.status === "success") {
             fetchOrders();  // Panggil ulang data jika sukses
         }
+        
     });
     
 
@@ -96,27 +97,27 @@ document.addEventListener("DOMContentLoaded", function () {
         // Search functionality
         const searchInput = document.getElementById("searchInput");
         const searchButton = document.getElementById("searchButton");
-        
+    
         searchButton.addEventListener("click", function() {
             searchOrders(searchInput.value);
         });
-        
+    
         searchInput.addEventListener("keypress", function(e) {
             if (e.key === "Enter") {
                 searchOrders(this.value);
             }
         });
-        
+    
         // Filter by status
         const filterStatus = document.getElementById("filterStatus");
         filterStatus.addEventListener("change", function() {
             filterOrdersByStatus(this.value);
         });
-        
+    
         // Refresh button
         const refreshButton = document.getElementById("refreshButton");
         refreshButton.addEventListener("click", fetchOrders);
-        
+    
         // Pagination controls
         document.getElementById("prevPage").addEventListener("click", function() {
             if (currentPage > 1) {
@@ -125,7 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 updatePagination();
             }
         });
-        
+    
         document.getElementById("nextPage").addEventListener("click", function() {
             const totalPages = Math.ceil(allOrders.length / itemsPerPage);
             if (currentPage < totalPages) {
@@ -135,6 +136,21 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
+    
+    // ✅ Function untuk mencari berdasarkan `id_pesanan`
+    function searchOrders(searchQuery) {
+        if (!searchQuery.trim()) {
+            renderOrdersTable(allOrders); // Jika kosong, tampilkan semua data
+            return;
+        }
+    
+        const filteredOrders = allOrders.filter(order =>
+            order.id_pesanan.toString().includes(searchQuery) // Cari berdasarkan ID pesanan
+        );
+    
+        renderOrdersTable(filteredOrders); // Tampilkan hasil pencarian
+    }
+    
 
     function searchOrders(searchTerm) {
         if (!searchTerm.trim()) {
@@ -185,40 +201,79 @@ document.addEventListener("DOMContentLoaded", function () {
         return `${day}-${month}`;
     }
     
+    function getColorByID(id, table) {
+        // Mengembalikan warna teks dan background berdasarkan ID dan tabelnya (admin, desainer, kurir, dll)
+        let color = "white"; // Warna teks tetap putih
+
+        if (table === 'admin') {
+            if (id === 1001) return { color, backgroundColor: "pink" }; // Admin Lilis
+            if (id === 1002) return { color, backgroundColor: "olive" }; // Admin Ina
+        } else if (table === 'desainer') {
+            if (id === 1101) return { color, backgroundColor: "purple" }; // Desainer IMAM
+            if (id === 1102) return { color, backgroundColor: "red" }; // Desainer JHODI
+        } else if (table === 'kurir') {
+            if (id === 1501) return { color, backgroundColor: "orange" }; // Kurir teddy
+            if (id === 1502) return { color, backgroundColor: "coral" }; // Kurir Mas Nur
+            if (id === 1503) return { color, backgroundColor: "tomato" }; // Kurir Jhodi
+        } else if (table === 'penjahit') {
+            if (id === 1301) return { color, backgroundColor: "green" }; // Penjahit Mas Ari
+            if (id === 1302) return { color, backgroundColor: "indigo" }; // Penjahit Mas Saep
+            if (id === 1303) return { color, backgroundColor: "violet" }; // Penjahit Mas Egeng
+            if (id === 1304) return { color, backgroundColor: "fireBrick" };
+            if (id === 1305) return { color, backgroundColor: "darkOrchid" };
+        } else if (table === 'qc') {
+            if (id === 1401) return { color, backgroundColor: "yellowgreen" }; // QC tita
+            if (id === 1402) return { color, backgroundColor: "olive" }; // QC ina
+            if (id === 1403) return { color, backgroundColor: "pink" }; // QC lilis
+        }
+    
+        return { color, backgroundColor: "white" }; // Default color
+    }
+    
+    
     function renderOrdersTable(orders) {
         const tableBody = document.getElementById("table-body");
         tableBody.innerHTML = "";
     
         orders.forEach(order => {
             const row = document.createElement("tr");
+            
+            // Dapatkan warna teks dan background berdasarkan ID
+            const adminColor = getColorByID(order.id_admin, 'admin');
+            const desainerColor = getColorByID(order.id_desainer, 'desainer');
+            const penjahitColor = getColorByID(order.id_penjahit, 'penjahit');
+            const qcColor = getColorByID(order.id_qc, 'qc');
+            
             row.innerHTML = `
                 <td>${formatTimestampFromString(order.timestamp) || "-"}</td>
+                <td>${order.id_input || "-"}</td>
                 <td>${order.id_pesanan || "-"}</td>
                 <td>${order.platform || "-"}</td>
-                <td>${adminList[order.id_admin] || "-"}</td>
+                <td style="color: ${adminColor.color}; background-color: ${adminColor.backgroundColor}; padding: 5px; border-radius: 5px;">${adminList[order.id_admin] || "-"}</td>
                 <td>${order.qty || "-"}</td>
                 <td>${formatTanggal(order.deadline)}</td>
-                <td>${desainerList[order.id_desainer] || "-"}</td>
+                <td style="color: ${desainerColor.color}; background-color: ${desainerColor.backgroundColor}; padding: 5px; border-radius: 5px;">${desainerList[order.id_desainer] || "-"}</td>
                 <td>${formatTimestamp(order.timestamp_designer) || "-"}</td>
                 <td>
                     ${order.layout_link ? `<a href="${order.layout_link}" target="_blank">Lihat Layout</a>` : "-"}
                 </td>
-                <td>${penjahitList[order.id_penjahit] || "-"}</td>
+                <td style="color: ${penjahitColor.color}; background-color: ${penjahitColor.backgroundColor}; padding: 5px; border-radius: 5px;">${penjahitList[order.id_penjahit] || "-"}</td>
                 <td>${formatTimestamp(order.timestamp_penjahit) || "-"}</td>
-                <td>${qcList[order.id_qc] || "-"}</td>
+                <td style="color: ${qcColor.color}; background-color: ${qcColor.backgroundColor}; padding: 5px; border-radius: 5px;">${qcList[order.id_qc] || "-"}</td>
                 <td>${formatTimestamp(order.timestamp_qc) || "-"}</td>
-                <td>${order.status_print || "-"}</td>
-                <td>${order.status_produksi || "-"}</td>
+                <td><span class="badge_input ${getBadgeClass(order.status_print)}">${order.status_print || "-"}</span></td>
+                <td><span class="badge_input ${getBadgeClass(order.status_produksi)}">${order.status_produksi || "-"}</span></td>
+
                 <td>
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button class="delete-icon" data-id="${order.id_input}"><i class="fas fa-trash-alt"></i></button>
-                    <button class="desc-table" data-id="${order.id_input}"><i class="fas fa-info-circle"></i></button>
-                </div>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button class="delete-icon" data-id="${order.id_input}"><i class="fas fa-trash-alt"></i></button>
+                        <button class="desc-table" data-id="${order.id_input}"><i class="fas fa-info-circle"></i></button>
+                    </div>
                 </td>
-                `;
-                tableBody.appendChild(row);
-            });
-            
+            `;
+            tableBody.appendChild(row);
+        });
+    
         addDeleteEventListeners();
         addUpdateEventListeners();
         addInputChangeEventListeners();
@@ -385,36 +440,52 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("ID Input tidak valid:", order);
             return;
         }
-
+    
         const modalBody = document.getElementById("orderDetails");
         modalBody.innerHTML = '<tr><td colspan="2" class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
         
         try {
             const linkFoto = await fetchLinkFoto(order.id_input);
             
+            function applyColor(id, table) {
+                const style = getColorByID(id, table);
+                return `style="
+                    color: ${style.color}; 
+                    background-color: ${style.backgroundColor}; 
+                    padding: 2px 8px; 
+                    border-radius: 5px; 
+                    font-size: 13px; 
+                    font-family: 'Poppins', sans-serif; 
+                    font-weight: 500;
+                    letter-spacing: -0.3px; 
+                    display: inline-flex; 
+                    margin: 4px 7px;
+                    align-items: center;"`;
+            }
+            
+    
             modalBody.innerHTML = `
                 <tr><th>ID Pesanan</th><td>${order.id_pesanan || "-"}</td></tr>
-                <tr><th>Admin</th><td>${adminList[order.id_admin] || "-"}</td></tr>
+                <tr><th>Admin</th><td ${applyColor(order.id_admin, 'admin')}>${adminList[order.id_admin] || "-"}</td></tr>
                 <tr><th>Timestamp</th><td>${order.timestamp || "-"}</td></tr>
                 <tr><th>Deadline</th><td>${formatTanggal(order.deadline) || "-"}</td></tr>
                 <tr><th>Quantity</th><td>${order.qty || "-"}</td></tr>
                 <tr><th>Platform</th><td>${order.platform || "-"}</td></tr>
-                <tr><th>Desainer</th><td>${desainerList[order.id_desainer] || "-"}</td></tr>
+                <tr><th>Desainer</th><td ${applyColor(order.id_desainer, 'desainer')}>${desainerList[order.id_desainer] || "-"}</td></tr>
                 <tr><th>Status Print</th><td><span class="badge ${getBadgeClass(order.status_print)}">${order.status_print || "-"}</span></td></tr>
-                <tr><th>Layout Link</th><td>${
-                    order.layout_link 
-                    ? `<a href="${order.layout_link}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-link"></i> Buka Link</a>`
-                    : "-"
-                }</td></tr>
-                <tr><th>Penjahit</th><td>${penjahitList[order.id_penjahit] || "-"}</td></tr>
-                <tr><th>QC</th><td>${qcList[order.id_qc] || "-"}</td></tr>
-                <tr><th>Link Foto</th><td>${
-                    linkFoto && linkFoto !== "-" 
-                    ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>` 
-                    : "Tidak Tersedia"
-                }</td></tr>
+                <tr><th>Status Produksi</th><td><span class="badge ${getBadgeClass(order.status_produksi)}">${order.status_produksi || "-"}</span></td></tr>
+                <tr><th>Layout Link</th><td>
+                    ${order.layout_link ? `<a href="${order.layout_link}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-link"></i> Buka Link</a>` : "-"}
+                </td></tr>
+                <tr><th>Penjahit</th><td ${applyColor(order.id_penjahit, 'penjahit')}>${penjahitList[order.id_penjahit] || "-"}</td></tr>
+                <tr><th>QC</th><td ${applyColor(order.id_qc, 'qc')}>${qcList[order.id_qc] || "-"}</td></tr>
+                <tr><th>Link Foto</th><td>
+                    ${linkFoto && linkFoto !== "-" 
+                        ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>`
+                        : "Tidak Tersedia"}
+                </td></tr>
             `;
-
+    
             window.currentOrder = order;
             const orderModal = document.getElementById("orderModal");
             const modal = new bootstrap.Modal(orderModal);
@@ -428,20 +499,22 @@ document.addEventListener("DOMContentLoaded", function () {
     
     function getBadgeClass(status) {
         switch(status) {
-            case '-': return 'bg-primary text-white';
-            case 'EDITING': return 'bg-primary text-white';
-            case 'PRINT VENDOR': return 'bg-light text-dark border';
-            case 'PROSES PRINT': return 'bg-warning text-dark';
-            case 'SELESAI PRINT': return 'bg-danger text-white';
-            case 'SEDANG DI-PRESS': return 'bg-indigo text-white';
-            case 'SEDANG DI-JAHIT': return 'bg-success text-white';
-            case 'TAS SUDAH DI-JAHIT': return 'bg-teal text-white';
-            case 'REJECT:PRINT ULANG': return 'bg-danger text-white';
-            case 'TAS BLM ADA': return 'bg-danger text-white';
-            case 'DONE': return 'bg-success text-white';
-            default: return 'bg-secondary text-white';
+            case '-': return 'option-default';
+            case 'EDITING': return 'option-EDITING';
+            case 'PRINT VENDOR': return 'option-PRINT-VENDOR';
+            case 'PROSES PRINT': return 'option-PROSES-PRINT';
+            case 'SELESAI PRINT': return 'option-SELESAI-PRINT';
+            case 'SEDANG DI PRESS': return 'option-SEDANG-DI-PRESS';
+            case 'SEDANG DI JAHIT': return 'option-SEDANG-DI-JAHIT';
+            case 'TAS SUDAH DI JAHIT': return 'option-TAS-SUDAH-DI-JAHIT';
+            case 'REJECT PRINT ULANG': return 'option-REJECT-PRINT-ULANG';
+            case 'TAS BLM ADA': return 'option-TAS-BLM-ADA';
+            case 'DONE': return 'option-DONE';
+            default: return 'option-default';
         }
     }
+    
+    
     
     
     function addDeleteEventListeners() {

@@ -81,7 +81,7 @@ h1 i {
 }
 
 .search-container button:hover {
-    background: #ffffff;
+    background: #5a52cc;
 }
 
 .filter-container {
@@ -501,3 +501,52 @@ select:focus, input[type="text"]:focus {
     background-color: #8B008B; color: white; } /* Ungu tua */
 .print-status-dropdown.option-DONE { 
     background-color: #008000; color: white; } /* Hijau */
+
+
+    td {
+        padding: 1px;
+        border-radius: 5px;
+        text-align: center;
+    }
+    
+    td a {
+        color: rgb(0, 0, 0);
+        text-decoration: none;
+        padding: 3px;
+        border-radius: 3px;
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    td a:hover {
+        background-color: rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Warna untuk badge_input */
+.badge_input {
+    width: 100%;
+    padding: 5px;
+    border-radius: 5px;
+    border: none;
+    margin: 10px auto; /* Tengahin secara horizontal */
+    display: block; /* Biar gak ikut inline */
+    text-align: center; /* Tengahin teks dalam input */
+    font-weight: bold;
+}
+
+/* Warna tiap status */
+.option-default { background-color: #808080; color: white; } /* Abu-abu */
+.option-EDITING { background-color: #4169E1; color: white; } /* Biru royal */
+.option-PRINT-VENDOR { background-color: #FF6347; color: white; } /* Tomato */
+.option-PROSES-PRINT { background-color: #FFD700; color: black; } /* Kuning */
+.option-SELESAI-PRINT { background-color: #800080; color: white; } /* Ungu */
+.option-SEDANG-DI-PRESS { background-color: #1E90FF; color: white; } /* Biru muda */
+.option-SEDANG-DI-JAHIT { background-color: #32CD32; color: white; } /* Hijau */
+.option-TAS-SUDAH-DI-JAHIT { background-color: #228B22; color: white; } /* Hijau gelap */
+.option-REJECT-PRINT-ULANG { background-color: #FF0000; color: white; } /* Merah */
+.option-TAS-BLM-ADA { background-color: #8B008B; color: white; } /* Ungu tua */
+.option-DONE { background-color: #008000; color: white; } /* Hijau */
+
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}

@@ -81,7 +81,7 @@ h1 i {
 }
 
 .search-container button:hover {
-    background: #ffffff;
+    background: #5a52cc;
 }
 
 .filter-container {
@@ -476,7 +476,7 @@ select:focus, input[type="text"]:focus {
 
 /* Styling utama untuk dropdown */
 .status-print {
-    padding: 5px;
+    padding: 10px;
     border-radius: 20px;
     font-weight: bold;
     text-align: center;
@@ -486,13 +486,21 @@ select:focus, input[type="text"]:focus {
     -moz-appearance: none;
     cursor: pointer;
     border: 2px solid #ccc;
+    background-color: white;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 16l-6-6h12z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 16px;
 }
 
+
+
 /* Tambahkan background dan warna teks untuk setiap status */
-.status-print.option-EDITING { background-color: #4169E1; color: white; }
-.status-print.option-PRINT-VENDOR { background-color: #FF6347; color: white; }
-.status-print.option-PROSES-PRINT { background-color: #FFD700; color: black; }
-.status-print.option-SELESAI-PRINT { background-color: #800080; color: white; }
+.option-EDITING { background-color: #4169E1; color: white; }
+.option-PRINT-VENDOR { background-color: #FF6347; color: white; }
+.option-PROSES-PRINT { background-color: #FFD700; color: black; }
+.option-SELESAI-PRINT { background-color: #800080; color: white; }
+
 
 /* Styling dropdown arrow */
 .status-print::after {
@@ -503,4 +511,31 @@ select:focus, input[type="text"]:focus {
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
+}
+
+
+.submit-link-btn, .open-link-btn {
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-left: 5px;
+}
+
+.submit-link-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.submit-link-btn:hover {
+    background-color: #45a049;
+}
+
+.open-link-btn {
+    background-color: #008CBA;
+    color: white;
+}
+
+.open-link-btn:hover {
+    background-color: #007bb5;
 }

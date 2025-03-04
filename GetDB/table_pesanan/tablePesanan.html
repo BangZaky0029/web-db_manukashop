@@ -16,27 +16,31 @@
         
         <div class="filter-section">
             <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Cari ID Pesanan...">
+                <input type="text" id="searchInput" placeholder="Cari ID Input...">
                 <button id="searchButton"><i class="fas fa-search"></i></button>
             </div>
-            
+            <input type="date" id="filter-tanggal">
             <div class="filter-container">
                 <select id="filterStatus" class="filter-status-dropdown">
-                    <option value="">Semua Status</option>
+                    <option value="">Pilih Status</option>
+                    <!-- Status Print -->
                     <option value="EDITING">EDITING</option>
                     <option value="PRINT VENDOR">PRINT VENDOR</option>
                     <option value="PROSES PRINT">PROSES PRINT</option>
                     <option value="SELESAI PRINT">SELESAI PRINT</option>
-                    <option value="SEDANG DI-PRESS">SEDANG DI-PRESS</option>
-                    <option value="SEDANG DI-JAHIT">SEDANG DI-JAHIT</option>
-                    <option value="TAS SUDAH DI-JAHIT">TAS SUDAH DI-JAHIT</option>
-                    <option value="REJECT:PRINT ULANG">REJECT:PRINT ULANG</option>
+                    
+                    <!-- Status Produksi -->
+                    <option value="SEDANG DI PRESS">SEDANG DI PRESS</option>
+                    <option value="SEDANG DI JAHIT">SEDANG DI JAHIT</option>
+                    <option value="TAS SUDAH DI JAHIT">TAS SUDAH DI JAHIT</option>
+                    <option value="REJECT PRINT ULANG">REJECT PRINT ULANG</option>
                     <option value="TAS BLM ADA">TAS BLM ADA</option>
                     <option value="DONE">DONE</option>
                 </select>
                 
                 <button id="refreshButton"><i class="fas fa-sync-alt"></i></button>
             </div>
+            
         </div>
         
         <div class="table-wrapper">
@@ -44,6 +48,7 @@
                 <thead>
                     <tr>
                         <th><i class="fas fa-clock"></i> Timestamp</th>
+                        <th><i class="fas fa-hashtag"></i> ID Input</th>
                         <th><i class="fas fa-hashtag"></i> ID Pesanan</th>
                         <th><i class="fas fa-shopping-cart"></i> PLT</th>
                         <th><i class="fas fa-user-tie"></i> Admin</th>
