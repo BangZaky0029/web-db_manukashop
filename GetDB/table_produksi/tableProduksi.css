@@ -474,6 +474,12 @@ select:focus, input[type="text"]:focus {
     }
 }
 
+.print-status-dropdown {
+    padding: 5px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
 .status-produksi {
     padding: 5px;
     border-radius: 20px;
