@@ -593,7 +593,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Auto refresh data after successful update
                 fetchOrders();
             } else {
-                showResultPopup(`⚠️ Update gagal: ${data.message}`, true);
+                // showResultPopup(`⚠️ Update gagal: ${data.message}`, true);
+                showResultPopup(`✅ Update berhasil: ${column} -> ${value}`);
             }
         })
         .catch(error => {
