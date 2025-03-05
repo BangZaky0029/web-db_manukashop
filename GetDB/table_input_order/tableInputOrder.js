@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let allOrdersData = [];
 
     function fetchOrders() {
-        fetch("http://127.0.0.1:5000/api/get-input-table")  // Sesuaikan dengan API kamu
+        fetch("http://192.168.0.27:5000/api/get-input-table")  // Sesuaikan dengan API kamu
             .then(response => response.json())
             .then(data => {
                 if (data.status === "success") {

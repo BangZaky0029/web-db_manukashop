@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Fungsi untuk memindahkan data ke table_urgent jika deadline hari ini
 async function moveToUrgentTable() {
     try {
-        const response = await fetch("http://127.0.0.1:5000/api/move_to_table_urgent", {
+        const response = await fetch("http://192.168.0.27:5000/api/move_to_table_urgent", {
             method: "POST",
             headers: { "Content-Type": "application/json" }
         });
@@ -159,7 +159,7 @@ async function moveToUrgentTable() {
             // Bulk update status for all orders
             const orderIds = allOrders.map(order => order.id_input);
             
-            const response = await fetch("http://127.0.0.1:5000/api/update_status_urgent", {
+            const response = await fetch("http://192.168.0.27:5000/api/update_status_urgent", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ order_ids: orderIds })
@@ -178,7 +178,7 @@ async function moveToUrgentTable() {
 
     async function fetchOrders() {
         try {
-            const response = await fetch("http://127.0.0.1:5000/api/get_table_urgent");
+            const response = await fetch("http://192.168.0.27:5000/api/get_table_urgent");
     
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -383,7 +383,7 @@ async function moveToUrgentTable() {
         await simulateSlowLoading(); // Simulate potential slow network
 
         try {
-            const response = await fetch("http://127.0.0.1:5000/api/references");
+            const response = await fetch("http://192.168.0.27:5000/api/references");
             
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -440,7 +440,7 @@ async function moveToUrgentTable() {
         }
     
         try {
-            const response = await fetch(`http://127.0.0.1:5000/api/get_link_foto/${id_input}`);
+            const response = await fetch(`http://192.168.0.27:5000/api/get_link_foto/${id_input}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -505,7 +505,7 @@ async function moveToUrgentTable() {
     }
 
     async function fetchNamaKet(idInput) {
-        const baseUrl = "http://127.0.0.1:5000"; // Sesuaikan dengan URL API kamu
+        const baseUrl = "http://192.168.0.27:5000"; // Sesuaikan dengan URL API kamu
         const url = `${baseUrl}/api/get_nama_ket/${idInput}`;
     
         try {
@@ -619,7 +619,7 @@ async function moveToUrgentTable() {
     }
     
     function updateOrder(id_input, column, value) {
-        const endpoint = "http://127.0.0.1:5000/api/sync-prod-to-pesanan";
+        const endpoint = "http://192.168.0.27:5000/api/sync-prod-to-pesanan";
         
         if (!id_input || !column) {
             console.error("❌ Gagal mengirim update: id_input atau column tidak valid");

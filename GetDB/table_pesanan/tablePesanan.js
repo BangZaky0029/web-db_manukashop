@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
         event.preventDefault(); // Hindari reload form
     
         const formData = new FormData(this);
-        const response = await fetch("http://127.0.0.1:5000/api/input-order", {
+        const response = await fetch("http://192.168.0.27:5000/api/input-order", {
             method: "POST",
             body: JSON.stringify(Object.fromEntries(formData)),
             headers: { "Content-Type": "application/json" },
@@ -50,10 +50,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         
     });
+    
 
     async function fetchOrders() {
         try {
-            const response = await fetch("http://127.0.0.1:5000/api/get-orders");
+            const response = await fetch("http://192.168.0.27:5000/api/get-orders");
             
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -315,7 +316,7 @@ document.addEventListener("DOMContentLoaded", function () {
     async function fetchSortedOrders() {
         try {
             console.log("Fetching sorted orders...");
-            const response = await fetch('http://127.0.0.1:5000/api/get_sorted_orders'); 
+            const response = await fetch('http://192.168.0.27:5000/api/get_sorted_orders'); 
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
@@ -397,7 +398,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function fetchReferenceData() {
         try {
-            const response = await fetch("http://127.0.0.1:5000/api/references");
+            const response = await fetch("http://192.168.0.27:5000/api/references");
             
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -454,7 +455,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     
         try {
-            const response = await fetch(`http://127.0.0.1:5000/api/get_link_foto/${id_input}`);
+            const response = await fetch(`http://192.168.0.27:5000/api/get_link_foto/${id_input}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -544,7 +545,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     async function fetchNamaKet(idInput) {
-        const baseUrl = "http://127.0.0.1:5000"; // Sesuaikan dengan URL API kamu
+        const baseUrl = "http://192.168.0.27:5000"; // Sesuaikan dengan URL API kamu
         const url = `${baseUrl}/api/get_nama_ket/${idInput}`;
     
         try {
@@ -611,7 +612,7 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghapus...';
     
         // Corrected endpoint to use id_input instead of id_pesanan
-        fetch(`http://127.0.0.1:5000/api/delete-order/${encodeURIComponent(selectedOrderId.trim())}`, { 
+        fetch(`http://192.168.0.27:5000/api/delete-order/${encodeURIComponent(selectedOrderId.trim())}`, { 
             method: "DELETE",
             headers: { "Content-Type": "application/json" }
         })
@@ -742,7 +743,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
     function updateOrder(id_input, column, value) {
         // Use the correct endpoint based on the Python API
-        const endpoint = "http://127.0.0.1:5000/api/update-print-status-layout";
+        const endpoint = "http://192.168.0.27:5000/api/update-print-status-layout";
     
         const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
         confirmUpdateBtn.disabled = true;

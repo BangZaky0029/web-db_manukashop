@@ -8,7 +8,7 @@
 
 /* Body Styles - Gradasi Biru ke Putih */
 body {
-    background: linear-gradient(135deg, #1a73e8, #6c63ff, #ffffff);
+    background: linear-gradient(135deg, #ff0000, #ff6363, #ffffff);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -31,7 +31,7 @@ body {
 
 /* Header Styles */
 h1 {
-    color: #1a73e8;
+    color: #ff0000;
     font-size: 28px;
     font-weight: 700;
     text-align: center;

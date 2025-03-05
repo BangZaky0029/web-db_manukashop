@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             showMessage('⏳ Sedang mengirim data...', 'loading');
 
-            const response = await fetch('http://127.0.0.1:5000/api/input-order', {
+            const response = await fetch('http://192.168.0.27:5000/api/input-order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
