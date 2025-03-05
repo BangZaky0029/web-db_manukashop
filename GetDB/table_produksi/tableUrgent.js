@@ -480,6 +480,9 @@ async function moveToUrgentTable() {
                 <tr><th>Deadline</th><td>${formatTanggal(order.deadline) || "-"}</td></tr>
                 <tr><th>Status Print</th><td>${order.status_print || "-"}</td></tr>
                 <tr><th>Status Produksi</th><td>${order.status_produksi || "-"}</td></tr>
+                <tr><th>Layout Link</th><td>
+                    ${order.layout_link ? `<a href="${order.layout_link}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-link"></i> Buka Link</a>` : "-"}
+                </td></tr>
                 <tr><th>Link Foto</th><td>
                 ${linkFoto && linkFoto !== "-" ? `<a href="${linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-image"></i> Lihat Foto</a>` : "Tidak Tersedia"}
                 </td></tr>
