@@ -485,17 +485,3 @@ select:focus, input[type="text"]:focus {
     border-radius: 20px;
     font-weight: bold;
 }
-
-/* Warna tiap status */
-.status-produksi.option-SEDANG-DI-PRESS 
-{ background-color: #1E90FF; color: white; } /* Biru muda */
-.status-produksi.option-SEDANG-DI-JAHIT { 
-    background-color: #32CD32; color: white; } /* Hijau */
-.status-produksi.option-TAS-SUDAH-DI-JAHIT { 
-    background-color: #228B22; color: white; } /* Hijau gelap */
-.status-produksi.option-REJECT-PRINT-ULANG { 
-    background-color: #FF0000; color: white; } /* Merah */
-.status-produksi.option-TAS-BLM-ADA { 
-    background-color: #8B008B; color: white; } /* Ungu tua */
-.status-produksi.option-DONE { 
-    background-color: #008000; color: white; } /* Hijau */
