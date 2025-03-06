@@ -1,8 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Debugging: Cek apakah elemen form sudah ada di DOM
     console.log(document.getElementById('id_pesanan'));  
     console.log(document.getElementById('deadline'));
-    console.log(document.querySelector('input[name="platform"]:checked')); 
+    console.log(document.querySelector('input[name="platform"]:checked'));
 
     // Mapping nama admin
     const adminNames = {
@@ -31,8 +30,86 @@ document.addEventListener('DOMContentLoaded', function() {
     const orderForm = document.getElementById('orderForm');
     const responseMessage = document.getElementById('responseMessage');
     const submitBtn = document.getElementById('submitBtn');
+    const imageUpload = document.getElementById('imageUpload');
+    const previewImage = document.getElementById('previewImage');
+    const linkInput = document.getElementById('link');
 
-    // **🛠 Form Validation**
+    // Handle clipboard paste events (for screenshots)
+    document.addEventListener('paste', function(event) {
+        const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+        
+        for (let item of items) {
+            if (item.type.indexOf('image') !== -1) {
+                const file = item.getAsFile();
+                if (file) {
+                    // Create a blob URL for the pasted image
+                    const imageUrl = URL.createObjectURL(file);
+                    
+                    // Update the preview image
+                    previewImage.src = imageUrl;
+                    previewImage.style.display = 'block';
+                    
+                    // Handle the image file
+                    handleImageUpload(file);
+                    
+                    // Prevent default paste behavior 
+                    event.preventDefault();
+                    break;
+                }
+            }
+        }
+    });
+
+    // Handle image upload via file input
+    imageUpload.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            // Create a blob URL for the selected file
+            const imageUrl = URL.createObjectURL(file);
+            
+            // Update the preview image
+            previewImage.src = imageUrl;
+            previewImage.style.display = 'block';
+            
+            // Handle the image file
+            handleImageUpload(file);
+        }
+    });
+
+    // Function to handle the image (works for both uploaded and pasted images)
+    function handleImageUpload(file) {
+        // Clear the link input visually, but we'll still use the base64 for the actual link value
+        linkInput.value = 'Image will be uploaded (preview shown above)';
+        linkInput.disabled = true; // Optional: disable the link input when an image is selected
+    
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Store the base64 data to send to API later
+            window.uploadedImageBase64 = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    // Handle link input for image preview
+    linkInput.addEventListener('input', function() {
+        const input = this.value;
+        
+        if (input.match(/\.(jpeg|jpg|png|gif)$/i)) {
+            previewImage.src = input; 
+            previewImage.style.display = 'block';
+            
+            // Clear any file upload when URL is entered
+            imageUpload.value = '';
+            window.uploadedImageBase64 = null;
+            linkInput.disabled = false;
+        } else {
+            // If input doesn't look like an image URL, hide the preview
+            if (!window.uploadedImageBase64) {
+                previewImage.style.display = 'none';
+            }
+        }
+    });
+
     function validateForm() {
         const idPesanan = document.getElementById("id_pesanan").value.trim();
         const deadline = document.getElementById("deadline").value;
@@ -48,8 +125,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const parsedQty = qty ? parseInt(qty, 10) : 0;
         if (isNaN(parsedQty) || parsedQty < 1) return showMessage('❌ Jumlah harus angka positif!', 'error');
 
-        if (link && !/^https?:\/\/\S+/.test(link)) {
-            return showMessage('❌ Format link tidak valid!', 'error');
+        // Check if either link or image is provided
+        if (!link && !window.uploadedImageBase64) {
+            return showMessage('❌ Link atau gambar wajib diisi!', 'error');
         }
 
         return true;
@@ -69,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Platform: document.querySelector('input[name="platform"]:checked').value,
                 qty: parseInt(document.getElementById('qty').value.trim(), 10),
                 nama_ket: document.getElementById('nama_ket').value.trim(),
-                link: document.getElementById('link').value.trim()
+                link: window.uploadedImageBase64 || document.getElementById('link').value.trim()
             };
 
             showMessage('⏳ Sedang mengirim data...', 'loading');
@@ -91,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const data = await response.json();
             showMessage(`✅ Data berhasil disimpan dengan ID: ${data?.data?.id_input || 'N/A'}`, 'success');
-            orderForm.reset();
+            resetForm();
 
         } catch (error) {
             console.error('Error details:', error);
@@ -107,8 +185,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    function resetForm() {
+        orderForm.reset();
+        previewImage.style.display = 'none';
+        window.uploadedImageBase64 = null;
+        linkInput.disabled = false;
+    }
+
     function showMessage(message, type) {
-        responseMessage.innerHTML = `<span style="color:${type === 'success' ? 'green' : 'red'}">${message}</span>`;
+        responseMessage.innerHTML = `<span style="color:${type === 'success' ? 'green' : type === 'loading' ? 'blue' : 'red'}">${message}</span>`;
         responseMessage.style.display = 'block';
         responseMessage.scrollIntoView({ behavior: 'smooth' });
     }

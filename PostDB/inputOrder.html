@@ -76,8 +76,20 @@
             </div>
             
             <div class="form-group">
-                <label for="link">Link</label>
-                <input type="url" id="link" name="link" placeholder="https://...">
+                <label for="link">Link atau Teks</label>
+                <div class="input-with-image">
+                    <input type="text" id="link" name="link" placeholder="Masukkan teks atau URL gambar">
+                    <div class="image-upload-container">
+                        <label for="imageUpload" class="upload-label">
+                            <span class="upload-icon">📷</span>
+                            <span>Upload</span>
+                        </label>
+                        <input type="file" id="imageUpload" accept="image/*" class="upload-input">
+                    </div>
+                </div>
+                <div class="preview-container">
+                    <img id="previewImage" src="" alt="Preview Gambar" style="display: none; max-width: 100%;">
+                </div>
             </div>
     
             <button type="submit" id="submitBtn">Kirim Data</button>

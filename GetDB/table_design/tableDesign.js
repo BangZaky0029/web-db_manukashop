@@ -30,7 +30,6 @@ document.addEventListener("DOMContentLoaded", function () {
             showResultPopup("Gagal memuat aplikasi. Silakan refresh halaman.", true);
         }
     }
-
     document.getElementById("inputForm").addEventListener("submit", async function (event) {
         event.preventDefault(); // Hindari reload form
     
@@ -207,9 +206,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 </td>
                 <td>
                     <input type="text" class="layout-link-input" data-id="${order.id_input}" data-column="layout_link"
-                        value="${order.layout_link || ''}" placeholder="Masukkan link" />
+                        value="${order.layout_link && !order.layout_link.startsWith('data:image') ? order.layout_link : (order.layout_link && order.layout_link.startsWith('data:image') ? 'Image uploaded' : '')}" placeholder="Masukkan link" ${order.layout_link && order.layout_link.startsWith('data:image') ? 'data-image-data="' + order.layout_link + '"' : ''} />
                     <button class="submit-link-btn" data-id="${order.id_input}">Submit</button>
-                    <button class="open-link-btn" data-id="${order.id_input}">🔗</button>
+                    <button class="upload-image-btn" data-id="${order.id_input}" title="Upload Image"><i class="fas fa-image"></i></button>
+                    <button class="preview-image-btn" data-id="${order.id_input}" title="Preview Image" ${!order.layout_link || !order.layout_link.startsWith('data:image') ? 'disabled' : ''}><i class="fas fa-eye"></i></button>
+                    <button class="open-link-btn" data-id="${order.id_input}" title="Open Link"><i class="fas fa-link"></i></button>
                 </td>
                 <td>${formatTanggal(order.deadline)}</td>
                 <td>
@@ -236,6 +237,9 @@ document.addEventListener("DOMContentLoaded", function () {
         addDescriptionEventListeners();
     }
 
+
+
+
     function getPlatformColor(platform) {
         const colors = {
             "Shopee": { color: "#FFFFFF", backgroundColor: "#EE4D2D" },   // Oranye Shopee
@@ -249,21 +253,101 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
+    // ✅ Event listener untuk tombol preview gambar
+    document.querySelectorAll(".preview-image-btn").forEach(button => {
+        button.addEventListener("click", function() {
+            const id_pesanan = this.dataset.id;
+            const input = document.querySelector(`.layout-link-input[data-id="${id_pesanan}"]`);
+            const imageData = input.dataset.imageData;
+            
+            if (imageData) {
+                // Create a temporary modal to preview the image
+                const previewModal = document.createElement('div');
+                previewModal.className = 'image-preview-modal';
+                previewModal.innerHTML = `
+                    <div class="image-preview-container">
+                        <img src="${imageData}" alt="Preview Image">
+                        <button class="close-preview-btn">×</button>
+                    </div>
+                `;
+                document.body.appendChild(previewModal);
+                
+                // Add close event
+                previewModal.querySelector('.close-preview-btn').addEventListener('click', () => {
+                    document.body.removeChild(previewModal);
+                });
+
+                // Close on background click
+                previewModal.addEventListener('click', (e) => {
+                    if (e.target === previewModal) {
+                        document.body.removeChild(previewModal);
+                    }
+                });
+            } else {
+                alert("Tidak ada gambar untuk ditampilkan.");
+            }
+        });
+    });
+
     
     function formatTimes(deadline) {
         if (!deadline) return "-"; 
-        const date = new Date(deadline);
-        
-        const day = String(date.getDate()).padStart(2, '0'); // Tanggal (DD)
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Bulan (MM)
-        const year = date.getFullYear(); // Tahun (YYYY)
+        const date = new Date(deadline);  // Date() mengubah ke zona waktu lokal
     
-        const hours = String(date.getHours()).padStart(2, '0'); // Jam (HH)
-        const minutes = String(date.getMinutes()).padStart(2, '0'); // Menit (mm)
+        const utcDay = String(date.getUTCDate()).padStart(2, '0');
+        const utcMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const utcYear = date.getUTCFullYear();
+        const utcHours = String(date.getUTCHours()).padStart(2, '0');
+        const utcMinutes = String(date.getUTCMinutes()).padStart(2, '0');
     
-        return `${day}-${month}-${year} | ${hours}:${minutes}`; // Format DD-MM-YYYY HH:mm
+        return `${utcDay}-${utcMonth}-${utcYear} | ${utcHours}:${utcMinutes}`;
     }
+
+    // ✅ Event listener untuk tombol upload gambar
+    document.addEventListener("click", function(event) {
+        if (event.target.classList.contains("upload-image-btn")) {
+            const id_pesanan = event.target.dataset.id;
+            if (!id_pesanan) {
+                console.error("ID pesanan tidak ditemukan di tombol upload.");
+                return;
+            }
     
+            // Buat input file secara dinamis
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.accept = "image/*"; // Hanya menerima gambar
+            fileInput.style.display = "none"; // Sembunyikan input file
+    
+            document.body.appendChild(fileInput);
+            fileInput.click(); // Trigger pemilihan file
+    
+            fileInput.addEventListener("change", function() {
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const reader = new FileReader();
+    
+                    reader.onload = function(e) {
+                        // Set preview gambar ke input terkait
+                        const input = document.querySelector(`.layout-link-input[data-id="${id_pesanan}"]`);
+                        console.log("Mencari input:", document.querySelector(`.layout-link-input[data-id="${id_pesanan}"]`));
+
+                        if (input) {
+                            input.dataset.imageData = e.target.result;
+                            console.log("Gambar berhasil dipilih:", file.name);
+                        }
+                    };
+    
+                    reader.readAsDataURL(file);
+                }
+                document.body.removeChild(fileInput); // Bersihkan elemen file input setelah digunakan
+            });
+        }
+    });
+    
+    
+    
+
+
     function addInputChangeEventListeners() {
         // ✅ Event listener untuk input layout link (diperbarui saat blur)
         document.querySelectorAll(".layout-link-input").forEach(input => {

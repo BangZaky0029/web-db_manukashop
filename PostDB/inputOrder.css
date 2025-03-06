@@ -272,8 +272,6 @@ input[type="number"]::-webkit-outer-spin-button {
     box-shadow: none;
 }
 
-/* (Previous CSS remains the same, add these specific modifications) */
-
 /* Header with User Info */
 .header {
     display: flex;
@@ -316,4 +314,68 @@ input[type="number"]::-webkit-outer-spin-button {
     margin-left: 0;   /* Hilangkan margin kiri */
     display: block;
     width: 100%;
+}
+
+/* New styles for file upload input */
+.input-with-image {
+    display: flex;
+    position: relative;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+}
+
+.input-with-image input[type="text"] {
+    flex: 1;
+}
+
+.image-upload-container {
+    position: relative;
+    min-width: 100px;
+}
+
+.upload-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background-color: #a084e8;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+    height: 44px;
+    border: none;
+}
+
+.upload-label:hover {
+    background-color: #8d74d2;
+    transform: translateY(-2px);
+}
+
+.upload-input {
+    position: absolute;
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    z-index: -1;
+}
+
+.upload-icon {
+    font-size: 16px;
+}
+
+.preview-container {
+    margin-top: 12px;
+    text-align: center;
+}
+
+#previewImage {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }

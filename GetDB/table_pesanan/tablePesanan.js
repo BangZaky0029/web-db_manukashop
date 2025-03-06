@@ -146,7 +146,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     
         const filteredOrders = allOrders.filter(order =>
-            order.id_pesanan.toString().includes(searchQuery) // Cari berdasarkan ID pesanan
+            order.id_input.toString().includes(searchQuery) // Cari berdasarkan ID pesanan
         );
     
         renderOrdersTable(filteredOrders); // Tampilkan hasil pencarian
@@ -159,18 +159,23 @@ document.addEventListener("DOMContentLoaded", function () {
             updatePagination();
             return;
         }
-        
+    
         const searchTermLower = searchTerm.toLowerCase();
-        const filteredOrders = allOrders.filter(order => 
-            order.id_input && order.id_input.toLowerCase().includes(searchTermLower)
+    
+        const filteredOrders = allOrders.filter(order =>
+            // Cari berdasarkan id_input atau id_pesanan
+            (order.id_input && order.id_input.toLowerCase().includes(searchTermLower)) ||
+            (order.id_pesanan && order.id_pesanan.toLowerCase().includes(searchTermLower)) ||
+            (order.platform && order.platform.toLowerCase().includes(searchTermLower))
         );
-        
+    
         currentPage = 1;
         renderOrdersTable(paginateOrders(filteredOrders));
         updatePagination();
-        
+    
         showResultPopup(`Ditemukan ${filteredOrders.length} hasil pencarian.`);
     }
+    
 
     function filterOrdersByStatus(status) {
         if (!status) {
@@ -298,17 +303,18 @@ document.addEventListener("DOMContentLoaded", function () {
     
     function formatTimes(deadline) {
         if (!deadline) return "-"; 
-        const date = new Date(deadline);
-        
-        const day = String(date.getDate()).padStart(2, '0'); // Tanggal (DD)
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Bulan (MM)
-        const year = date.getFullYear(); // Tahun (YYYY)
+        const date = new Date(deadline);  // Date() mengubah ke zona waktu lokal
     
-        const hours = String(date.getHours()).padStart(2, '0'); // Jam (HH)
-        const minutes = String(date.getMinutes()).padStart(2, '0'); // Menit (mm)
+        const utcDay = String(date.getUTCDate()).padStart(2, '0');
+        const utcMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const utcYear = date.getUTCFullYear();
+        const utcHours = String(date.getUTCHours()).padStart(2, '0');
+        const utcMinutes = String(date.getUTCMinutes()).padStart(2, '0');
     
-        return `${day}-${month}-${year} | ${hours}:${minutes}`; // Format DD-MM-YYYY HH:mm
+        return `${utcDay}-${utcMonth}-${utcYear} | ${utcHours}:${utcMinutes}`;
     }
+    
+    
     
     
     
